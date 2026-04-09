@@ -74,6 +74,3 @@ python app.py
 ```
 Then open `http://localhost:7860` in your browser.
 
-## Demo
-
-https://github.com/user-attachments/assets/dialogue_example.mp4
