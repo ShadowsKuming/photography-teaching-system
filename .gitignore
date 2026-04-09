@@ -1,0 +1,45 @@
+# ── Secrets ──────────────────────────────────────────────────────────
+.env
+*.key
+*.pem
+
+# ── Python ───────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Virtual environments / Conda ─────────────────────────────────────
+venv/
+.venv/
+env/
+.conda/
+
+# ── Tests & dev scripts ──────────────────────────────────────────────
+test_*.py
+test.py
+test.jpg
+
+# ── Saved profiles (user data, not code) ─────────────────────────────
+profiles/
+profiles_test/
+
+# ── Claude Code ──────────────────────────────────────────────────────
+.claude/
+CLAUDE.md
+
+# ── Editor / IDE ─────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# ── Logs & temp ──────────────────────────────────────────────────────
+*.log
+/tmp/

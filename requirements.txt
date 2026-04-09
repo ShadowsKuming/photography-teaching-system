@@ -1,0 +1,19 @@
+# ── Web UI ────────────────────────────────────────────────────────────
+gradio==6.11.0
+
+# ── Image processing ──────────────────────────────────────────────────
+Pillow==12.2.0
+
+# ── Environment / config ──────────────────────────────────────────────
+python-dotenv==1.0.1
+
+# ── LLM providers (text) ─────────────────────────────────────────────
+openai==2.30.0
+google-genai==1.70.0
+
+# ── Local VLM backend (optional — only needed for qwen eval provider) ─
+# Install PyTorch separately from https://pytorch.org with the right CUDA version.
+# torch==2.11.0+cu128
+transformers==5.5.0
+accelerate==1.13.0
+qwen-vl-utils==0.0.8
