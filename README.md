@@ -248,7 +248,6 @@ git clone git@github.com:ShadowsKuming/photography-teaching-system.git
 cd photography-teaching-system
 conda env create -f environment.yml
 conda activate photography-teaching
-pip install pydantic-settings
 ```
 
 **2. Add API keys**
