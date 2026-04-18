@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Camera Proto</string>
+    <string name="title_activity_main">Camera Proto</string>
+    <string name="package_name">com.ufrgs.cameraproto</string>
+    <string name="custom_url_scheme">com.ufrgs.cameraproto</string>
+</resources>
