@@ -31,7 +31,7 @@ from backend.api.sessions import (
     update_teaching_session,
 )
 from backend.core.planner import plan_lesson
-from backend.core.storage import load_profile, save_profile
+from backend.core.storage import load_brief, load_profile, save_profile
 from backend.core.teacher import complete_session_block
 from backend.models.session import (
     CaptureRecord,
@@ -132,7 +132,8 @@ def start_teaching(body: TeachStartRequest):
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"No profile found for '{body.name}'")
 
-    lesson_plan = plan_lesson(profile)
+    brief = load_brief(body.name)
+    lesson_plan = plan_lesson(profile, teaching_brief=brief)
     session = create_teaching_session(profile)
     session.lesson_plan = lesson_plan
     update_teaching_session(session)
@@ -162,6 +163,8 @@ def submit_photo(session_id: str, body: TeachSubmitRequest):
     image = _decode_image(body.image_base64)
     live_ctx = _parse_live_context(body.live_context)
 
+    brief = load_brief(session.profile.name)
+
     result, updated_profile = complete_session_block(
         profile=session.profile,
         image=image,
@@ -169,6 +172,7 @@ def submit_photo(session_id: str, body: TeachSubmitRequest):
         lesson_plan=session.lesson_plan,
         shot_intent=body.shot_intent,
         prev_report=session.last_report,
+        teaching_brief=brief,
     )
 
     # Persist updated profile and update session
@@ -200,7 +204,8 @@ def next_lesson(session_id: str):
     except KeyError:
         raise HTTPException(status_code=404, detail="Teaching session not found")
 
-    lesson_plan = plan_lesson(session.profile)
+    brief = load_brief(session.profile.name)
+    lesson_plan = plan_lesson(session.profile, teaching_brief=brief)
     session.lesson_plan = lesson_plan
     update_teaching_session(session)
 

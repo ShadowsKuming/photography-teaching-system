@@ -19,7 +19,7 @@ from backend.models.teaching import (
 from backend.core.llm import call_text_json
 from backend.core.progression import is_stuck_on_skill, select_target_skill
 
-_SYSTEM = """You are an expert photography teacher designing a single lesson for a student.
+_SYSTEM_BASE = """You are an expert photography teacher designing a single lesson for a student.
 Your output must be a JSON object. Be concise and practical.
 Adapt your language to the student's level (1=absolute beginner, 5=advanced).
 Connect everything to the student's photographic intent and style."""
@@ -53,6 +53,7 @@ Reply with the JSON object only.
 def plan_lesson(
     profile: UserProfile,
     target_skill: TargetSkill | None = None,
+    teaching_brief: str | None = None,
 ) -> LessonPlan:
     """
     Generate a lesson plan for the student's next session block.
@@ -85,8 +86,14 @@ def plan_lesson(
         f"goal: {profile.primary_goal}"
     )
 
+    planner_system = (
+        f"{teaching_brief}\n\n---\n\n{_SYSTEM_BASE}"
+        if teaching_brief
+        else _SYSTEM_BASE
+    )
+
     messages = [
-        {"role": "system", "content": _SYSTEM},
+        {"role": "system", "content": planner_system},
         {"role": "user", "content": _PROMPT_TEMPLATE.format(
             name=profile.name,
             goal=profile.primary_goal,

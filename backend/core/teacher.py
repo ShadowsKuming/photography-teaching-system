@@ -38,7 +38,7 @@ from backend.core.progression import (
 
 # ── Gap analysis ──────────────────────────────────────────────────────────────
 
-_GAP_SYSTEM = """You are an expert photography teacher analysing a student's learning gap.
+_GAP_SYSTEM_BASE = """You are an expert photography teacher analysing a student's learning gap.
 Classify the primary gap as one of:
   skill  — the student understood the goal but execution fell short (technique, timing, settings)
   vision — the student didn't see the opportunity before shooting (pre-visualisation)
@@ -72,7 +72,7 @@ Based on this, identify the gap. Return JSON:
 
 # ── Structured feedback ───────────────────────────────────────────────────────
 
-_FEEDBACK_SYSTEM = """You are an expert photography teacher giving targeted feedback.
+_FEEDBACK_SYSTEM_BASE = """You are an expert photography teacher giving targeted feedback.
 Your feedback must:
 - Address ONE thing only
 - Connect to the student's photographic intent
@@ -121,13 +121,20 @@ def _analyse_gap(
     report: EvaluationReport,
     live_ctx: LiveSessionContext,
     lesson_plan: LessonPlan,
+    teaching_brief: str | None = None,
 ) -> GapAnalysis:
     skill = lesson_plan.target_skill
     focus_obs = report.get(skill)
     dim = profile.skill_state.get(skill)
 
+    gap_system = (
+        f"{teaching_brief}\n\n---\n\n{_GAP_SYSTEM_BASE}"
+        if teaching_brief
+        else _GAP_SYSTEM_BASE
+    )
+
     messages = [
-        {"role": "system", "content": _GAP_SYSTEM},
+        {"role": "system", "content": gap_system},
         {"role": "user", "content": _GAP_PROMPT.format(
             style=profile.style_preference.selected_style,
             subject=profile.primary_subject,
@@ -172,11 +179,18 @@ def _generate_feedback(
     profile: UserProfile,
     gap: GapAnalysis,
     lesson_plan: LessonPlan,
+    teaching_brief: str | None = None,
 ) -> FeedbackMessage:
     dim = profile.skill_state.get(lesson_plan.target_skill)
 
+    feedback_system = (
+        f"{teaching_brief}\n\n---\n\n{_FEEDBACK_SYSTEM_BASE}"
+        if teaching_brief
+        else _FEEDBACK_SYSTEM_BASE
+    )
+
     messages = [
-        {"role": "system", "content": _FEEDBACK_SYSTEM},
+        {"role": "system", "content": feedback_system},
         {"role": "user", "content": _FEEDBACK_PROMPT.format(
             name=profile.name,
             style=profile.style_preference.selected_style,
@@ -231,17 +245,19 @@ def complete_session_block(
     lesson_plan: LessonPlan,
     shot_intent: str | None = None,
     prev_report: EvaluationReport | None = None,
+    teaching_brief: str | None = None,
 ) -> tuple[SessionBlockResult, UserProfile]:
     """
     Run the full post-shot pipeline for one session block.
 
     Args:
-        profile      : current UserProfile (will be updated)
-        image        : submitted PIL image
-        live_ctx     : LiveSessionContext from the camera layer
-        lesson_plan  : the plan that was shown to the student this session
-        shot_intent  : what the student said they were trying to achieve
-        prev_report  : EvaluationReport from the previous session (for delta)
+        profile         : current UserProfile (will be updated)
+        image           : submitted PIL image
+        live_ctx        : LiveSessionContext from the camera layer
+        lesson_plan     : the plan that was shown to the student this session
+        shot_intent     : what the student said they were trying to achieve
+        prev_report     : EvaluationReport from the previous session (for delta)
+        teaching_brief  : pre-generated brief from storage (injected into system prompts)
 
     Returns:
         (SessionBlockResult, updated_profile)
@@ -260,10 +276,10 @@ def complete_session_block(
     attempt_result = decide_attempt_result(live_ctx, report)
 
     # Step 3 — Gap analysis (LLM)
-    gap = _analyse_gap(profile, report, live_ctx, lesson_plan)
+    gap = _analyse_gap(profile, report, live_ctx, lesson_plan, teaching_brief)
 
     # Step 4 — Structured feedback (LLM)
-    feedback_struct = _generate_feedback(profile, gap, lesson_plan)
+    feedback_struct = _generate_feedback(profile, gap, lesson_plan, teaching_brief)
 
     # Step 5 — Convert to prose (LLM)
     feedback_prose = _to_prose(feedback_struct)
