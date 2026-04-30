@@ -2,6 +2,8 @@ import { useRef, useState } from 'react'
 import { Camera } from '../components/Camera'
 import { SkillProgress } from '../components/SkillProgress'
 import { useTeaching } from '../hooks/useTeaching'
+import { SubmissionOutcome } from './teaching/components/SubmissionOutcome'
+import { TargetSkillTrack } from './teaching/components/TargetSkillTrack'
 import { buildMinimalLiveCtx } from '../types'
 import type { RecommendedAction } from '../types'
 
@@ -129,6 +131,11 @@ export function Teaching({ studentName }: Props) {
 
       <main className="flex-1 overflow-y-auto px-4 py-5">
         <div className="mx-auto max-w-xl space-y-4">
+          <TargetSkillTrack
+            targetSkill={lessonPlan.target_skill}
+            currentLevel={profile.skill_state[lessonPlan.target_skill].level}
+            primarySubject={profile.primary_subject}
+          />
 
           {/* Progress panel */}
           {showProgress && (
@@ -198,6 +205,8 @@ export function Teaching({ studentName }: Props) {
           {/* Feedback */}
           {step === 'feedback' && result && (
             <div className="space-y-3">
+              <SubmissionOutcome result={result} />
+
               <div className="rounded-2xl border border-slate-700 bg-slate-900 p-4">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Feedback
