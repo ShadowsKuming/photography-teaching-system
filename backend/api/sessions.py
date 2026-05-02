@@ -172,6 +172,22 @@ def get_interview_session(session_id: str) -> InterviewSession:
     return InterviewSession.from_dict(data)
 
 
+def update_interview_session(session: InterviewSession) -> None:
+    now = time.time()
+    with _lock:
+        with _get_db() as conn:
+            conn.execute("""
+                UPDATE sessions
+                SET data = ?, updated_at = ?
+                WHERE session_id = ? AND session_type = 'interview'
+            """, (
+                json.dumps(session.to_dict()),
+                now,
+                session.session_id
+            ))
+            conn.commit()
+
+
 def delete_interview_session(session_id: str) -> None:
     with _lock:
         with _get_db() as conn:
