@@ -27,7 +27,7 @@ from backend.models.teaching import EvaluationReport, LessonPlan
 
 # ── Database setup ──────────────────────────────────────────────────────────
 
-_DB_PATH = Path(__file__).parent.parent.parent / "sessions.db"
+_DB_PATH = Path(__file__).parent.parent.parent / "database.db"
 _SESSION_EXPIRY_HOURS = 24
 _lock = threading.Lock()
 
