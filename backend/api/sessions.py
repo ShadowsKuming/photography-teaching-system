@@ -24,12 +24,12 @@ from backend.core.i18n import LanguageCode
 from backend.core.interview import InterviewAgent
 from backend.models.profile import UserProfile
 from backend.models.teaching import EvaluationReport, LessonPlan
+from backend.core.db import _lock
 
 # ── Database setup ──────────────────────────────────────────────────────────
 
 _DB_PATH = Path(__file__).parent.parent.parent / "database.db"
 _SESSION_EXPIRY_HOURS = 24
-_lock = threading.Lock()
 
 def _get_db() -> sqlite3.Connection:
     """Get database connection with row factory."""
