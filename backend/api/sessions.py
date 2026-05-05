@@ -113,9 +113,9 @@ class TeachingSession:
         """Serialize to dict for database storage."""
         return {
             "session_id": self.session_id,
-            "profile": self.profile.model_dump(),
-            "lesson_plan": self.lesson_plan.model_dump() if self.lesson_plan else None,
-            "last_report": self.last_report.model_dump() if self.last_report else None
+            "profile": self.profile.model_dump(mode="json"),
+            "lesson_plan": self.lesson_plan.model_dump(mode="json") if self.lesson_plan else None,
+            "last_report": self.last_report.model_dump(mode="json") if self.last_report else None
         }
 
     @classmethod
