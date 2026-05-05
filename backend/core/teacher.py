@@ -269,7 +269,7 @@ def complete_session_block(
     prev_report: EvaluationReport | None = None,
     teaching_brief: str | None = None,
     language: LanguageCode = "en-GB",
-) -> tuple[SessionBlockResult, UserProfile]:
+) -> tuple[SessionBlockResult, UserProfile, EvaluationReport]:
     """
     Run the full post-shot pipeline for one session block.
 
@@ -332,4 +332,4 @@ def complete_session_block(
         skill_updated=skill_level_changed,
         milestone_reached=milestone_changed,
         is_diagnostic=profile.is_diagnostic,
-    ), updated_profile
+    ), updated_profile, report

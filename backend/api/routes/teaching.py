@@ -174,7 +174,7 @@ def submit_photo(session_id: str, body: TeachSubmitRequest):
 
     brief = load_brief(session.profile.name)
 
-    result, updated_profile = complete_session_block(
+    result, updated_profile, report = complete_session_block(
         profile=session.profile,
         image=image,
         live_ctx=live_ctx,
@@ -187,6 +187,7 @@ def submit_photo(session_id: str, body: TeachSubmitRequest):
 
     # Persist updated profile and update session
     save_profile(updated_profile)
+    session.last_report = report
     session.profile = updated_profile
     update_teaching_session(session)
 
