@@ -1,11 +1,18 @@
 import { useRef, useState } from 'react'
 import { Camera } from '../components/Camera'
-import { SkillProgress } from '../components/SkillProgress'
 import { useTeaching } from '../hooks/useTeaching'
+import { ProfileSheet } from './teaching/components/ProfileSheet'
 import { SubmissionOutcome } from './teaching/components/SubmissionOutcome'
 import { TargetSkillTrack } from './teaching/components/TargetSkillTrack'
 import { buildMinimalLiveCtx } from '../types'
 import type { RecommendedAction } from '../types'
+
+function avatarInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase()
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
+}
 
 interface Props {
   studentName: string
@@ -14,10 +21,10 @@ interface Props {
 type Step = 'lesson' | 'camera' | 'intent' | 'evaluating' | 'feedback'
 
 const ACTION_LABELS: Record<RecommendedAction, string> = {
-  retry:        'Try again',
+  retry: 'Try again',
   guided_retry: 'Try again',
-  advance:      'Next challenge',
-  end_lesson:   'End lesson',
+  advance: 'Next challenge',
+  end_lesson: 'End lesson',
 }
 
 export function Teaching({ studentName }: Props) {
@@ -27,7 +34,7 @@ export function Teaching({ studentName }: Props) {
   const [step, setStep] = useState<Step>('lesson')
   const [capturedImage, setCapturedImage] = useState<string | null>(null)   // base64
   const [shotIntent, setShotIntent] = useState('')
-  const [showProgress, setShowProgress] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // ── Camera handlers ────────────────────────────────────────────────────────
@@ -103,7 +110,7 @@ export function Teaching({ studentName }: Props) {
 
   // ── Main UI ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex min-h-dvh flex-col bg-slate-950 text-white">
+    <div className="flex h-dvh max-h-dvh flex-col overflow-hidden bg-slate-950 text-white">
       {/* Header */}
       <header
         className="shrink-0 border-b border-slate-800 bg-slate-900/80 px-4 py-3 backdrop-blur-md"
@@ -121,13 +128,20 @@ export function Teaching({ studentName }: Props) {
           </div>
           <button
             type="button"
-            onClick={() => setShowProgress((v) => !v)}
-            className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-400 transition hover:border-slate-500 hover:text-white"
+            onClick={() => setShowProfile(true)}
+            aria-label="Open your progress"
+            className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-sm font-bold text-white shadow-md shadow-indigo-600/30 ring-1 ring-white/10 transition active:scale-95"
           >
-            Progress
+            {avatarInitials(studentName)}
           </button>
         </div>
       </header>
+
+      <ProfileSheet
+        open={showProfile}
+        profile={profile}
+        onClose={() => setShowProfile(false)}
+      />
 
       <main className="flex-1 overflow-y-auto px-4 py-5">
         <div className="mx-auto max-w-xl space-y-4">
@@ -136,16 +150,6 @@ export function Teaching({ studentName }: Props) {
             currentLevel={profile.skill_state[lessonPlan.target_skill].level}
             primarySubject={profile.primary_subject}
           />
-
-          {/* Progress panel */}
-          {showProgress && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Your progress
-              </p>
-              <SkillProgress profile={profile} />
-            </div>
-          )}
 
           {/* Lesson card */}
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
