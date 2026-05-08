@@ -43,14 +43,14 @@ export function TargetSkillTrack({ targetSkill, currentLevel, primarySubject }: 
             </linearGradient>
           </defs>
           <path
-            d="M 16 12 Q 100 48 200 12 T 384 12"
+            d="M 16 12 L 384 12"
             fill="none"
             stroke="rgb(51 65 85 / 0.6)"
             strokeWidth="4"
             strokeLinecap="round"
           />
           <path
-            d="M 16 12 Q 100 48 200 12 T 384 12"
+            d="M 16 12 L 384 12"
             fill="none"
             pathLength={100}
             stroke="url(#teachingTrackGrad)"
