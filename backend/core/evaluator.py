@@ -2,8 +2,8 @@
 AssignmentEvaluationAssistant — stateless photo analyser.
 
 Takes a PIL image and returns an EvaluationReport with objective
-observations across all five skill dimensions. No scores, no teaching
-language — the evaluator is a pure observer.
+observations and numeric scores across all five skill dimensions.
+No teaching language — the evaluator is a pure observer.
 
 The TeacherAgent uses the report to:
   - determine final_capture_state for each dimension
@@ -29,6 +29,8 @@ Rules:
   poor       = significant issues that undermine the dimension
   acceptable = works but has noticeable room for improvement
   strong     = clearly executed, serves the image well
+- Provide a numeric score between 0 and 100 for each dimension.
+  poor should usually be in the 0-49 range, acceptable in 50-79, strong in 80-100.
 - If pose_expression is not applicable (no person in frame), set status to not_applicable and observations to "N/A".
 """
 
@@ -39,26 +41,31 @@ Analyse this photograph and return a JSON object with this exact structure:
   "composition": {{
     "observations": "<what you see>",
     "status": "poor|acceptable|strong",
+    "score": 0,
     "vs_previous": "<one sentence on change vs previous, or null>"
   }},
   "lighting": {{
     "observations": "<what you see>",
     "status": "poor|acceptable|strong",
+    "score": 0,
     "vs_previous": null
   }},
   "subject_clarity": {{
     "observations": "<what you see>",
     "status": "poor|acceptable|strong",
+    "score": 0,
     "vs_previous": null
   }},
   "pose_expression": {{
     "observations": "<what you see, or N/A>",
     "status": "poor|acceptable|strong|not_applicable",
+    "score": null,
     "vs_previous": null
   }},
   "background_control": {{
     "observations": "<what you see>",
     "status": "poor|acceptable|strong",
+    "score": 0,
     "vs_previous": null
   }}
 }}
@@ -78,6 +85,12 @@ _DIMENSION_KEYS: list[TargetSkill] = [
 ]
 
 _FALLBACK_STATUS: DimensionStatus = "acceptable"
+_FALLBACK_SCORE_BY_STATUS: dict[DimensionStatus, int | None] = {
+    "poor": 40,
+    "acceptable": 65,
+    "strong": 85,
+    "not_applicable": None,
+}
 
 
 def _build_prompt(
@@ -116,6 +129,14 @@ def _parse_dimension(
     # Normalise unexpected values to fallback
     valid = {"poor", "acceptable", "strong", "not_applicable"}
     status: DimensionStatus = raw_status if raw_status in valid else _FALLBACK_STATUS
+    raw_score = data.get("score")
+    score: int | None
+    if status == "not_applicable":
+        score = None
+    elif isinstance(raw_score, int):
+        score = max(0, min(100, raw_score))
+    else:
+        score = _FALLBACK_SCORE_BY_STATUS[status]
 
     vs_previous = data.get("vs_previous")
     # Inherit vs_previous from previous report if LLM left it null
@@ -127,6 +148,7 @@ def _parse_dimension(
         dimension=key,
         observations=data.get("observations", "No observation available."),
         status=status,
+        score=score,
         vs_previous=vs_previous,
     )
 
@@ -138,6 +160,7 @@ def _fallback_report(focus_dim: TargetSkill) -> EvaluationReport:
             dimension=key,
             observations="Evaluation unavailable.",
             status="acceptable",
+            score=65,
         )
     return EvaluationReport(
         composition=_obs("composition"),
@@ -147,6 +170,7 @@ def _fallback_report(focus_dim: TargetSkill) -> EvaluationReport:
             dimension="pose_expression",
             observations="N/A",
             status="not_applicable",
+            score=None,
         ),
         background_control=_obs("background_control"),
         focus_dimension=focus_dim,
@@ -173,10 +197,15 @@ def evaluate(
     """
     prompt = _build_prompt(focus_dim, shot_intent, prev_report)
     fallback_raw = {
-        key: {"observations": "Evaluation unavailable.", "status": "acceptable", "vs_previous": None}
+        key: {"observations": "Evaluation unavailable.", "status": "acceptable", "score": 65, "vs_previous": None}
         for key in _DIMENSION_KEYS
     }
-    fallback_raw["pose_expression"] = {"observations": "N/A", "status": "not_applicable", "vs_previous": None}
+    fallback_raw["pose_expression"] = {
+        "observations": "N/A",
+        "status": "not_applicable",
+        "score": None,
+        "vs_previous": None,
+    }
 
     data = call_vision_json(image, prompt, fallback=fallback_raw)
 

@@ -184,6 +184,9 @@ def submit_photo(session_id: str, body: TeachSubmitRequest):
 
     return TeachSubmitResponse(
         feedback_text=result.feedback_text,
+        overall_score=result.overall_score,
+        focus_score=result.focus_score,
+        dimension_scores=result.dimension_scores,
         recommended_action=result.recommended_action,
         reason=result.reason,
         skill_updated=result.skill_updated,

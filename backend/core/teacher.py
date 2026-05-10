@@ -20,7 +20,7 @@ from __future__ import annotations
 from PIL import Image
 
 from backend.models.profile import UserProfile
-from backend.models.session import LiveSessionContext, SessionBlockResult
+from backend.models.session import LiveSessionContext, SessionBlockResult, TargetSkill
 from backend.models.teaching import (
     EvaluationReport,
     FeedbackMessage,
@@ -236,6 +236,23 @@ def _to_prose(feedback: FeedbackMessage) -> str:
     return call_text(messages).strip()
 
 
+def _build_scores(
+    report: EvaluationReport, target_skill: TargetSkill
+) -> tuple[int, int, dict[TargetSkill, int | None]]:
+    dimension_scores: dict[TargetSkill, int | None] = {
+        "composition": report.composition.score,
+        "lighting": report.lighting.score,
+        "subject_clarity": report.subject_clarity.score,
+        "pose_expression": report.pose_expression.score,
+        "background_control": report.background_control.score,
+    }
+    valid_scores = [v for v in dimension_scores.values() if v is not None]
+    overall = round(sum(valid_scores) / len(valid_scores)) if valid_scores else 0
+    focus = dimension_scores.get(target_skill)
+    focus_score = focus if focus is not None else overall
+    return overall, focus_score, dimension_scores
+
+
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def complete_session_block(
@@ -303,9 +320,13 @@ def complete_session_block(
         "retry":        "Let's try again with fresh eyes.",
         "end_lesson":   "You've done excellent work today.",
     }
+    overall_score, focus_score, dimension_scores = _build_scores(report, target_skill)
 
     return SessionBlockResult(
         feedback_text=feedback_prose,
+        overall_score=overall_score,
+        focus_score=focus_score,
+        dimension_scores=dimension_scores,
         recommended_action=recommended,
         reason=reason_map[recommended],
         skill_updated=skill_level_changed,

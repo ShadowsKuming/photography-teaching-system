@@ -139,11 +139,12 @@ MILESTONE_THRESHOLDS: dict[MilestoneLevel, str] = {
 class DimensionObservation(BaseModel):
     """
     Objective observations for one analysis dimension.
-    No scores, no teaching language — the evaluator is a pure observer.
+    Includes objective status + score for downstream feedback/UI.
     """
     dimension: TargetSkill
     observations: str                   # factual description of what the photo shows
     status: DimensionStatus             # derived assessment for downstream use
+    score: int | None = Field(default=None, ge=0, le=100)  # numeric quality score for UI feedback
     vs_previous: str | None = None      # delta vs previous submission if available
 
 

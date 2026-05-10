@@ -117,6 +117,9 @@ class TeachSubmitRequest(BaseModel):
 
 class TeachSubmitResponse(BaseModel):
     feedback_text: str
+    overall_score: int
+    focus_score: int
+    dimension_scores: dict[TargetSkill, int | None]
     recommended_action: RecommendedAction
     reason: str
     skill_updated: bool

@@ -58,6 +58,9 @@ export type RecommendedAction = 'retry' | 'guided_retry' | 'advance' | 'end_less
 
 export interface SubmitResult {
   feedback_text: string
+  overall_score: number
+  focus_score: number
+  dimension_scores: Record<TargetSkill, number | null>
   recommended_action: RecommendedAction
   reason: string
   skill_updated: boolean
