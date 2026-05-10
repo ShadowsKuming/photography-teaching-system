@@ -19,9 +19,15 @@ export function Interview({ onComplete }: Props) {
 
   const [inputMode, setInputMode] = useState<InputMode>('chat')
   const [text, setText] = useState('')
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const messagesRef = useRef<HTMLElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const startedRef = useRef(false)
+
+  const scrollToBottom = () => {
+    const container = messagesRef.current
+    if (!container) return
+    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
+  }
 
   // Start interview once
   useEffect(() => {
@@ -47,8 +53,8 @@ export function Interview({ onComplete }: Props) {
 
   // Scroll to bottom on new messages
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, showStyleGrid])
+    requestAnimationFrame(scrollToBottom)
+  }, [messages, showStyleGrid, isLoading, error])
 
   const handleSend = () => {
     const trimmed = text.trim()
@@ -82,7 +88,7 @@ export function Interview({ onComplete }: Props) {
       </header>
 
       {/* Messages */}
-      <main className="flex-1 overflow-y-auto px-4 py-4">
+      <main ref={messagesRef} className="flex-1 overflow-y-auto px-4 py-4">
         <div className="mx-auto max-w-xl space-y-3">
           {messages.map((m, i) => (
             <ChatBubble key={i} role={m.role} content={m.content} />
@@ -107,8 +113,6 @@ export function Interview({ onComplete }: Props) {
           {error && (
             <p className="text-center text-xs text-red-400">{error}</p>
           )}
-
-          <div ref={bottomRef} />
         </div>
       </main>
 

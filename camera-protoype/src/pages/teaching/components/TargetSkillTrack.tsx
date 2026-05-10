@@ -14,7 +14,6 @@ export function TargetSkillTrack({ targetSkill, currentLevel, primarySubject }: 
   }
 
   const raw = Math.max(0, Math.min(STAGE_COUNT, Math.round(Number(currentLevel) || 0)))
-  const progressPct = raw < 1 ? 0 : (raw / STAGE_COUNT) * 100
   const skillName = SKILL_LABELS[targetSkill]
 
   return (

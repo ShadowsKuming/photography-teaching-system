@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Camera } from '../components/Camera'
 import { useTeaching } from '../hooks/useTeaching'
 import { ProfileSheet } from './teaching/components/ProfileSheet'
@@ -35,7 +35,17 @@ export function Teaching({ studentName }: Props) {
   const [capturedImage, setCapturedImage] = useState<string | null>(null)   // base64
   const [shotIntent, setShotIntent] = useState('')
   const [showProfile, setShowProfile] = useState(false)
+  const contentRef = useRef<HTMLElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const scrollToBottom = () => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }
+
+  useEffect(() => {
+    requestAnimationFrame(scrollToBottom)
+  }, [step, result, isLoading, error, capturedImage])
 
   // ── Camera handlers ────────────────────────────────────────────────────────
   const handleCapture = (base64: string) => {
@@ -71,6 +81,8 @@ export function Teaching({ studentName }: Props) {
     const liveCtx = buildMinimalLiveCtx(lessonPlan.target_skill)
     await submitPhoto(capturedImage, liveCtx, shotIntent || undefined)
     setStep('feedback')
+    requestAnimationFrame(scrollToBottom)
+    setTimeout(scrollToBottom, 120)
   }
 
   // ── Action button ──────────────────────────────────────────────────────────
@@ -143,7 +155,7 @@ export function Teaching({ studentName }: Props) {
         onClose={() => setShowProfile(false)}
       />
 
-      <main className="flex-1 overflow-y-auto px-4 py-5">
+      <main ref={contentRef} className="flex-1 overflow-y-auto px-4 py-5">
         <div className="mx-auto max-w-xl space-y-4">
           <TargetSkillTrack
             targetSkill={lessonPlan.target_skill}
@@ -238,6 +250,7 @@ export function Teaching({ studentName }: Props) {
               </button>
             </div>
           )}
+          <div ref={bottomRef} />
         </div>
       </main>
 
