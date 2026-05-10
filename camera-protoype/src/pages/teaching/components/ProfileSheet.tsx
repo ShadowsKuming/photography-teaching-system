@@ -19,10 +19,10 @@ interface Props {
 
 const MILESTONE_ORDER: MilestoneLevel[] = ['beginner', 'developing', 'intermediate', 'advanced']
 const MILESTONE_LABEL: Record<MilestoneLevel, string> = {
-  beginner:     'Beginner',
-  developing:   'Developing',
+  beginner: 'Beginner',
+  developing: 'Developing',
   intermediate: 'Intermediate',
-  advanced:     'Advanced',
+  advanced: 'Advanced',
 }
 
 function initials(name: string): string {
@@ -43,6 +43,8 @@ export function ProfileSheet({ open, profile, onClose }: Props) {
   )
 
   const milestoneIdx = MILESTONE_ORDER.indexOf(profile.milestone)
+  const milestoneProgress =
+    milestoneIdx <= 0 ? 0 : (milestoneIdx / (MILESTONE_ORDER.length - 1)) * 100
 
   return (
     <Drawer
@@ -90,10 +92,7 @@ export function ProfileSheet({ open, profile, onClose }: Props) {
               <div className="min-w-0">
                 <p className="truncate text-xs uppercase tracking-wider text-slate-500">Photographer</p>
                 <p className="truncate text-lg font-semibold text-white">{profile.name}</p>
-                <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-indigo-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-indigo-300 ring-1 ring-inset ring-indigo-500/30">
-                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" aria-hidden />
-                  {MILESTONE_LABEL[profile.milestone]}
-                </span>
+
               </div>
             </section>
 
@@ -101,45 +100,32 @@ export function ProfileSheet({ open, profile, onClose }: Props) {
               <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                 Milestone path
               </p>
-              <ol className="mt-3 grid grid-cols-4 gap-1">
+              <ol className="relative mt-3 grid grid-cols-4 gap-1">
+                <span
+                  className="pointer-events-none absolute left-0 right-0 top-1 h-0.5 bg-slate-700"
+                  aria-hidden
+                />
+                <span
+                  className="pointer-events-none absolute left-0 top-1 h-0.5 bg-indigo-500 transition-[width] duration-500"
+                  style={{ width: `${milestoneProgress}%` }}
+                  aria-hidden
+                />
                 {MILESTONE_ORDER.map((m, i) => {
                   const reached = i <= milestoneIdx
                   return (
-                    <li key={m} className="flex flex-col items-center">
-                      <div
-                        className={`relative flex h-2 w-full items-center ${
-                          i === 0 ? 'justify-end' : i === MILESTONE_ORDER.length - 1 ? 'justify-start' : 'justify-center'
-                        }`}
-                      >
-                        {i !== 0 && (
-                          <span
-                            className={`absolute left-0 right-1/2 top-1/2 h-0.5 -translate-y-1/2 ${
-                              reached ? 'bg-indigo-500' : 'bg-slate-700'
-                            }`}
-                            aria-hidden
-                          />
-                        )}
-                        {i !== MILESTONE_ORDER.length - 1 && (
-                          <span
-                            className={`absolute left-1/2 right-0 top-1/2 h-0.5 -translate-y-1/2 ${
-                              i < milestoneIdx ? 'bg-indigo-500' : 'bg-slate-700'
-                            }`}
-                            aria-hidden
-                          />
-                        )}
+                    <li key={m} className="relative z-[1] flex flex-col items-center">
+                      <div className="relative grid h-2 w-full place-items-center">
                         <span
-                          className={`relative z-[1] h-3.5 w-3.5 rounded-full border-2 ${
-                            reached
-                              ? 'border-indigo-400 bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.6)]'
-                              : 'border-slate-600 bg-slate-800'
-                          }`}
+                          className={`-translate-y-[2px] relative z-[1] h-3.5 w-3.5 rounded-full border-2 ${reached
+                            ? 'border-indigo-400 bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.6)]'
+                            : 'border-slate-600 bg-slate-800'
+                            }`}
                           aria-hidden
                         />
                       </div>
                       <span
-                        className={`mt-2 text-center text-[10px] font-medium leading-tight ${
-                          reached ? 'text-indigo-200' : 'text-slate-500'
-                        }`}
+                        className={`mt-2 text-center text-[10px] font-medium leading-tight ${reached ? 'text-indigo-200' : 'text-slate-500'
+                          }`}
                       >
                         {MILESTONE_LABEL[m]}
                       </span>
@@ -198,13 +184,12 @@ function SkillCard({ skill, level }: SkillCardProps) {
           <div className="flex items-baseline justify-between gap-3">
             <h3 className="truncate text-sm font-semibold text-white">{SKILL_LABELS[skill]}</h3>
             <span
-              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
-                isMaxed
-                  ? 'bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-500/30'
-                  : safeLevel === 0
-                    ? 'bg-slate-700/40 text-slate-400 ring-1 ring-inset ring-slate-600/40'
-                    : 'bg-indigo-500/15 text-indigo-300 ring-1 ring-inset ring-indigo-500/30'
-              }`}
+              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${isMaxed
+                ? 'bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-500/30'
+                : safeLevel === 0
+                  ? 'bg-slate-700/40 text-slate-400 ring-1 ring-inset ring-slate-600/40'
+                  : 'bg-indigo-500/15 text-indigo-300 ring-1 ring-inset ring-indigo-500/30'
+                }`}
             >
               Level {safeLevel}/{STAGE_COUNT}
             </span>
@@ -213,11 +198,10 @@ function SkillCard({ skill, level }: SkillCardProps) {
 
           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-800">
             <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                isMaxed
-                  ? 'bg-gradient-to-r from-amber-400 to-amber-500'
-                  : 'bg-gradient-to-r from-emerald-400 via-indigo-400 to-fuchsia-500'
-              }`}
+              className={`h-full rounded-full transition-all duration-500 ${isMaxed
+                ? 'bg-gradient-to-r from-amber-400 to-amber-500'
+                : 'bg-gradient-to-r from-emerald-400 via-indigo-400 to-fuchsia-500'
+                }`}
               style={{ width: `${pct}%` }}
             />
           </div>
@@ -233,9 +217,8 @@ function SkillCard({ skill, level }: SkillCardProps) {
         </div>
 
         <span
-          className={`mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-full text-slate-400 transition-transform duration-200 ${
-            expanded ? 'rotate-180 bg-slate-800 text-white' : 'bg-slate-800/60'
-          }`}
+          className={`mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-full text-slate-400 transition-transform duration-200 ${expanded ? 'rotate-180 bg-slate-800 text-white' : 'bg-slate-800/60'
+            }`}
           aria-hidden
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -258,13 +241,12 @@ function SkillCard({ skill, level }: SkillCardProps) {
               return (
                 <li key={stage} className="flex items-start gap-3">
                   <span
-                    className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full border text-[11px] font-bold ${
-                      isPast
-                        ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-300'
-                        : isCurrent
-                          ? 'border-indigo-400 bg-indigo-500/30 text-white shadow-[0_0_10px_rgba(99,102,241,0.45)]'
-                          : 'border-slate-700 bg-slate-800/60 text-slate-500'
-                    }`}
+                    className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full border text-[11px] font-bold ${isPast
+                      ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-300'
+                      : isCurrent
+                        ? 'border-indigo-400 bg-indigo-500/30 text-white shadow-[0_0_10px_rgba(99,102,241,0.45)]'
+                        : 'border-slate-700 bg-slate-800/60 text-slate-500'
+                      }`}
                     aria-hidden
                   >
                     {isPast ? '✓' : isLocked ? <LockIcon /> : stage}
@@ -272,9 +254,8 @@ function SkillCard({ skill, level }: SkillCardProps) {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline gap-2">
                       <p
-                        className={`text-sm font-semibold ${
-                          isPast ? 'text-emerald-200' : isCurrent ? 'text-white' : 'text-slate-400'
-                        }`}
+                        className={`text-sm font-semibold ${isPast ? 'text-emerald-200' : isCurrent ? 'text-white' : 'text-slate-400'
+                          }`}
                       >
                         {info.title}
                       </p>
@@ -290,9 +271,8 @@ function SkillCard({ skill, level }: SkillCardProps) {
                       )}
                     </div>
                     <p
-                      className={`mt-0.5 text-xs leading-relaxed ${
-                        isLocked ? 'text-slate-500' : 'text-slate-300'
-                      }`}
+                      className={`mt-0.5 text-xs leading-relaxed ${isLocked ? 'text-slate-500' : 'text-slate-300'
+                        }`}
                     >
                       {info.gain}
                     </p>

@@ -5,7 +5,6 @@ interface TrackStageNodeProps {
   isHere: boolean
   isFuture: boolean
   isMaxed: boolean
-  bobY: number
 }
 
 export function TrackStageNode({
@@ -15,7 +14,6 @@ export function TrackStageNode({
   isHere,
   isFuture,
   isMaxed,
-  bobY,
 }: TrackStageNodeProps) {
   let circleClass = 'border-slate-600 bg-slate-800/90 text-slate-500'
   if (isPast) {
@@ -34,7 +32,6 @@ export function TrackStageNode({
   return (
     <li
       className="flex flex-col items-center"
-      style={{ transform: `translateY(${bobY}px)` }}
     >
       <div
         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold transition-all duration-300 ${circleClass}`}

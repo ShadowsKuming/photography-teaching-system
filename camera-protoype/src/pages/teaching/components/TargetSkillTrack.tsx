@@ -29,46 +29,13 @@ export function TargetSkillTrack({ targetSkill, currentLevel, primarySubject }: 
         </span>
       </div>
 
-      <div className="relative min-h-[120px] px-1">
-        <svg
-          className="pointer-events-none absolute inset-x-0 top-7 h-[72px] w-full"
-          viewBox="0 0 400 72"
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <defs>
-            <linearGradient id="teachingTrackGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="rgb(16 185 129 / 0.95)" />
-              <stop offset="100%" stopColor="rgb(99 102 241 / 0.85)" />
-            </linearGradient>
-          </defs>
-          <path
-            d="M 16 12 L 384 12"
-            fill="none"
-            stroke="rgb(51 65 85 / 0.6)"
-            strokeWidth="4"
-            strokeLinecap="round"
-          />
-          <path
-            d="M 16 12 L 384 12"
-            fill="none"
-            pathLength={100}
-            stroke="url(#teachingTrackGrad)"
-            strokeWidth="4"
-            strokeLinecap="round"
-            style={{
-              strokeDasharray: `${progressPct} 100`,
-            }}
-          />
-        </svg>
-
+      <div className="relative shrink-0 px-1">
         <ol className="relative z-[1] m-0 grid w-full list-none grid-cols-5 gap-0 p-0">
           {Array.from({ length: STAGE_COUNT }, (_, i) => {
             const stage = i + 1
             const isPast = raw > stage
             const isHere = raw === stage || (raw === 0 && stage === 1)
             const isFuture = raw === 0 ? stage > 1 : raw < stage
-            const bobY = i % 2 === 0 ? 0 : 7
             const isMaxed = isHere && raw === STAGE_COUNT
 
             return (
@@ -80,7 +47,6 @@ export function TargetSkillTrack({ targetSkill, currentLevel, primarySubject }: 
                 isHere={isHere}
                 isFuture={isFuture}
                 isMaxed={isMaxed}
-                bobY={bobY}
               />
             )
           })}
