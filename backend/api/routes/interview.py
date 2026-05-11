@@ -19,6 +19,7 @@ from backend.api.schemas import (
     InterviewCompleteResponse,
     InterviewNameRequest,
     InterviewNameResponse,
+    InterviewStartRequest,
     InterviewStartResponse,
     InterviewStyleRequest,
     InterviewStyleResponse,
@@ -28,15 +29,17 @@ from backend.api.sessions import (
     delete_interview_session,
     get_interview_session,
 )
+from backend.core.i18n import normalize_language
 from backend.core.storage import save_profile
 
 router = APIRouter(prefix="/interview", tags=["interview"])
 
 
 @router.post("/start", response_model=InterviewStartResponse)
-def start_interview():
+def start_interview(body: InterviewStartRequest | None = None):
     """Create a new interview session and return the opening message."""
-    session = create_interview_session()
+    language = normalize_language(body.language if body else None)
+    session = create_interview_session(language=language)
     return InterviewStartResponse(
         session_id=session.session_id,
         opening_message=session.agent.opening_message,
@@ -50,6 +53,10 @@ def chat(session_id: str, body: InterviewChatRequest):
         session = get_interview_session(session_id)
     except KeyError:
         raise HTTPException(status_code=404, detail="Interview session not found")
+
+    if body.language is not None:
+        session.language = normalize_language(body.language)
+        session.agent.set_language(session.language)
 
     turn = session.agent.chat(body.message)
     return InterviewChatResponse(
@@ -68,6 +75,10 @@ def submit_style(session_id: str, body: InterviewStyleRequest):
     except KeyError:
         raise HTTPException(status_code=404, detail="Interview session not found")
 
+    if body.language is not None:
+        session.language = normalize_language(body.language)
+        session.agent.set_language(session.language)
+
     if session.agent.state not in ("style_shown", "naming"):
         raise HTTPException(status_code=400, detail="Style grid has not been shown yet")
 
@@ -82,6 +93,10 @@ def submit_name(session_id: str, body: InterviewNameRequest):
         session = get_interview_session(session_id)
     except KeyError:
         raise HTTPException(status_code=404, detail="Interview session not found")
+
+    if body.language is not None:
+        session.language = normalize_language(body.language)
+        session.agent.set_language(session.language)
 
     if session.agent.state != "naming":
         raise HTTPException(status_code=400, detail="Not ready for name yet")

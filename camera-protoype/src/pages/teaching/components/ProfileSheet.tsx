@@ -2,6 +2,9 @@ import { useMemo, useState } from 'react'
 import type { MilestoneLevel, Profile, TargetSkill } from '../../../types'
 import { SKILL_CONTENT, describeCurrentState, describeNextStep } from './skillContent'
 import { SKILL_LABELS, STAGE_COUNT } from './trackConfig'
+import type { AppLocale } from '../../../i18n'
+import { useI18n } from '../../../i18n'
+import { LanguageSelector } from '../../../components/LanguageSelector'
 import {
   Drawer,
   DrawerClose,
@@ -15,6 +18,7 @@ interface Props {
   open: boolean
   profile: Profile
   onClose: () => void
+  locale: AppLocale
 }
 
 const MILESTONE_ORDER: MilestoneLevel[] = ['beginner', 'developing', 'intermediate', 'advanced']
@@ -32,7 +36,8 @@ function initials(name: string): string {
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
 }
 
-export function ProfileSheet({ open, profile, onClose }: Props) {
+export function ProfileSheet({ open, profile, onClose, locale }: Props) {
+  const { setLocale, copy } = useI18n()
   const skills = useMemo(
     () =>
       (Object.entries(profile.skill_state) as [TargetSkill, { level: number }][])
@@ -54,26 +59,31 @@ export function ProfileSheet({ open, profile, onClose }: Props) {
       }}
     >
       <DrawerContent
-        aria-label="Your progress"
+        aria-label={copy.profileProgressTitle}
         className="border-slate-800 bg-slate-950 text-white"
         style={{ paddingTop: 'env(safe-area-inset-top)', maxHeight: 'calc(100dvh - 1.5rem)' }}
       >
         <DrawerHeader className="px-5 pt-2 pb-0 text-left md:text-left">
           <div className="flex items-center justify-between">
             <DrawerTitle className="text-sm font-semibold text-slate-100">
-              Your progress
+              {copy.profileProgressTitle}
             </DrawerTitle>
-            <DrawerClose asChild>
-              <button
-                type="button"
-                className="rounded-full px-3 py-1.5 text-xs font-medium text-indigo-300 transition hover:text-white active:scale-95"
-              >
-                Done
-              </button>
-            </DrawerClose>
+            <div className="flex items-center gap-2">
+              <LanguageSelector locale={locale} onChange={setLocale} />
+              <DrawerClose asChild>
+                <button
+                  type="button"
+                  className="rounded-full px-3 py-1.5 text-xs font-medium text-indigo-300 transition hover:text-white active:scale-95"
+                >
+                  {copy.profileDone}
+                </button>
+              </DrawerClose>
+            </div>
           </div>
           <DrawerDescription className="sr-only">
-            Your photography milestones and skill levels.
+            {locale === 'pt-BR'
+              ? 'Seus marcos de fotografia e niveis de habilidade.'
+              : 'Your photography milestones and skill levels.'}
           </DrawerDescription>
         </DrawerHeader>
 
@@ -90,7 +100,9 @@ export function ProfileSheet({ open, profile, onClose }: Props) {
                 {initials(profile.name)}
               </div>
               <div className="min-w-0">
-                <p className="truncate text-xs uppercase tracking-wider text-slate-500">Photographer</p>
+                <p className="truncate text-xs uppercase tracking-wider text-slate-500">
+                  {copy.profilePhotographer}
+                </p>
                 <p className="truncate text-lg font-semibold text-white">{profile.name}</p>
 
               </div>
@@ -98,7 +110,7 @@ export function ProfileSheet({ open, profile, onClose }: Props) {
 
             <section className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                Milestone path
+                {copy.profileMilestonePath}
               </p>
               <ol className="relative mt-3 grid grid-cols-4 gap-1">
                 <span
@@ -137,7 +149,7 @@ export function ProfileSheet({ open, profile, onClose }: Props) {
 
             <section className="mt-6">
               <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                Your skills
+                {copy.profileSkills}
               </p>
               <div className="space-y-3">
                 {skills.map(([skill, { level }]) => (
@@ -147,7 +159,7 @@ export function ProfileSheet({ open, profile, onClose }: Props) {
             </section>
 
             <p className="mt-8 text-center text-[11px] leading-relaxed text-slate-600">
-              Levels grow each time you submit a strong photo for that skill.
+              {copy.profileLevelsHint}
             </p>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as api from '../api/client'
 import type { LessonPlan, LiveContextInput, Profile, SubmitResult } from '../types'
+import type { AppLocale } from '../i18n'
 
 export interface UseTeachingReturn {
   profile: Profile | null
@@ -13,7 +14,7 @@ export interface UseTeachingReturn {
   clearResult: () => void
 }
 
-export function useTeaching(studentName: string): UseTeachingReturn {
+export function useTeaching(studentName: string, locale: AppLocale): UseTeachingReturn {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [lessonPlan, setLessonPlan] = useState<LessonPlan | null>(null)
   const [result, setResult] = useState<SubmitResult | null>(null)
@@ -22,11 +23,11 @@ export function useTeaching(studentName: string): UseTeachingReturn {
   const sessionIdRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!studentName) return
+    if (!studentName || sessionIdRef.current) return
     setIsLoading(true)
     setError(null)
     api
-      .teachStart(studentName)
+      .teachStart(studentName, locale)
       .then((res) => {
         sessionIdRef.current = res.session_id
         setProfile(res.profile)
@@ -34,7 +35,7 @@ export function useTeaching(studentName: string): UseTeachingReturn {
       })
       .catch((e) => setError(String(e)))
       .finally(() => setIsLoading(false))
-  }, [studentName])
+  }, [studentName, locale])
 
   const submitPhoto = useCallback(
     async (imageBase64: string, liveCtx: LiveContextInput, shotIntent?: string) => {
@@ -47,6 +48,7 @@ export function useTeaching(studentName: string): UseTeachingReturn {
           imageBase64,
           liveCtx,
           shotIntent,
+          locale,
         )
         setResult(res)
         // Update local skill display
@@ -72,7 +74,7 @@ export function useTeaching(studentName: string): UseTeachingReturn {
         setIsLoading(false)
       }
     },
-    [profile],
+    [profile, locale],
   )
 
   const nextLesson = useCallback(async () => {
@@ -80,7 +82,7 @@ export function useTeaching(studentName: string): UseTeachingReturn {
     setIsLoading(true)
     setError(null)
     try {
-      const res = await api.teachNext(sessionIdRef.current)
+      const res = await api.teachNext(sessionIdRef.current, locale)
       setLessonPlan(res.lesson_plan)
       setResult(null)
     } catch (e) {
@@ -88,7 +90,7 @@ export function useTeaching(studentName: string): UseTeachingReturn {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [locale])
 
   const clearResult = useCallback(() => setResult(null), [])
 

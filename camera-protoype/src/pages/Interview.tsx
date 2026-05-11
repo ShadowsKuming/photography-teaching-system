@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ChatBubble } from '../components/ChatBubble'
 import { StyleGrid } from '../components/StyleGrid'
 import { useInterview } from '../hooks/useInterview'
+import { useI18n } from '../i18n'
 import type { Profile, StyleName } from '../types'
 
 interface Props {
@@ -11,11 +12,12 @@ interface Props {
 type InputMode = 'chat' | 'name'
 
 export function Interview({ onComplete }: Props) {
+  const { locale, copy } = useI18n()
   const {
     messages, interviewState, isLoading, error,
     showStyleGrid, profile,
     start, send, selectStyles, submitName, finalise,
-  } = useInterview()
+  } = useInterview(locale)
 
   const [inputMode, setInputMode] = useState<InputMode>('chat')
   const [text, setText] = useState('')
@@ -81,8 +83,8 @@ export function Interview({ onComplete }: Props) {
         <div className="flex items-center gap-2">
           <span className="text-lg">📷</span>
           <div>
-            <p className="text-xs font-medium text-indigo-400">Photography Coach</p>
-            <p className="text-sm font-semibold">Getting to know you</p>
+            <p className="text-xs font-medium text-indigo-400">{copy.appName}</p>
+            <p className="text-sm font-semibold">{copy.interviewTitle}</p>
           </div>
         </div>
       </header>
@@ -128,7 +130,7 @@ export function Interview({ onComplete }: Props) {
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder={inputMode === 'name' ? 'Enter your first name…' : 'Type a message…'}
+            placeholder={inputMode === 'name' ? copy.interviewNamePlaceholder : copy.interviewChatPlaceholder}
             disabled={isLoading || showStyleGrid}
             className="flex-1 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-40"
           />
@@ -138,7 +140,7 @@ export function Interview({ onComplete }: Props) {
             disabled={!text.trim() || isLoading || showStyleGrid}
             className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-40"
           >
-            Send
+            {copy.interviewSend}
           </button>
         </div>
       </div>
