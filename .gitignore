@@ -53,9 +53,13 @@ data/
 # ── Deployment documentation (session-specific) ──────────────────────
 SESSION_SUMMARY.md
 *_DEPLOYMENT.md
+*_DEPLOYMENT_GUIDE.md
 DEPLOYMENT_*.md
+DEPLOY_*.md
 INTEGRATION_GUIDE.md
 API_ACCESS_GUIDE.md
+AWS_DEPLOYMENT_GUIDE.md
+DEPLOY_FRONTEND_EC2.md
 
 # ── Unused deployment workflows ──────────────────────────────────────
 .github/workflows/deploy-aws.yml
