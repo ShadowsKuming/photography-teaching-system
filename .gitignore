@@ -43,3 +43,24 @@ CLAUDE.md
 # ── Logs & temp ──────────────────────────────────────────────────────
 *.log
 /tmp/
+
+# ── Database files ───────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# ── Deployment documentation (session-specific) ──────────────────────
+SESSION_SUMMARY.md
+*_DEPLOYMENT.md
+DEPLOYMENT_*.md
+INTEGRATION_GUIDE.md
+API_ACCESS_GUIDE.md
+
+# ── Unused deployment workflows ──────────────────────────────────────
+.github/workflows/deploy-aws.yml
+.github/workflows/deploy-backend-only.yml
+
+# ── Extra Docker configs (not used in production) ────────────────────
+camera-protoype/Dockerfile.frontend
+camera-protoype/nginx.conf
