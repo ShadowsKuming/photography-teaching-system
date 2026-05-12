@@ -7,11 +7,12 @@ import type { Profile, StyleName } from '../types'
 
 interface Props {
   onComplete: (profile: Profile) => void
+  onBack?: () => void
 }
 
 type InputMode = 'chat' | 'name'
 
-export function Interview({ onComplete }: Props) {
+export function Interview({ onComplete, onBack }: Props) {
   const { locale, copy } = useI18n()
   const {
     messages, interviewState, isLoading, error,
@@ -80,9 +81,21 @@ export function Interview({ onComplete }: Props) {
         className="shrink-0 border-b border-slate-800 bg-slate-900/80 px-4 py-3 backdrop-blur-md"
         style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-800 hover:text-white"
+              aria-label="Go back"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+              </svg>
+            </button>
+          )}
           <span className="text-lg">📷</span>
-          <div>
+          <div className="flex-1">
             <p className="text-xs font-medium text-indigo-400">{copy.appName}</p>
             <p className="text-sm font-semibold">{copy.interviewTitle}</p>
           </div>

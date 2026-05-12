@@ -17,11 +17,12 @@ function avatarInitials(name: string): string {
 
 interface Props {
   studentName: string
+  onBack?: () => void
 }
 
 type Step = 'lesson' | 'camera' | 'intent' | 'evaluating' | 'feedback'
 
-export function Teaching({ studentName }: Props) {
+export function Teaching({ studentName, onBack }: Props) {
   const { locale, copy } = useI18n()
   const actionLabels: Record<RecommendedAction, string> = {
     retry: copy.actionRetry,
@@ -130,7 +131,19 @@ export function Teaching({ studentName }: Props) {
         style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-800 hover:text-white"
+                aria-label="Go back"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+              </button>
+            )}
             <span className="text-lg">📷</span>
             <div>
               <p className="text-xs font-medium text-indigo-400 capitalize">

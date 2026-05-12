@@ -38,14 +38,20 @@ export function App() {
   if (page === 'interview') {
     return (
       <I18nProvider locale={locale} setLocale={setLocale} copy={copy}>
-        <Interview onComplete={handleInterviewComplete} />
+        <Interview
+          onComplete={handleInterviewComplete}
+          onBack={() => setPage('landing')}
+        />
       </I18nProvider>
     )
   }
 
   return (
     <I18nProvider locale={locale} setLocale={setLocale} copy={copy}>
-      <Teaching studentName={studentName} />
+      <Teaching
+        studentName={studentName}
+        onBack={() => setPage('landing')}
+      />
     </I18nProvider>
   )
 }
