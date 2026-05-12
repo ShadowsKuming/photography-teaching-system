@@ -1,0 +1,51 @@
+name: Deploy Backend to EC2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'requirements-minimal.txt'
+      - 'Dockerfile'
+      - '.github/workflows/deploy-backend.yml'
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/photography-teaching-system
+
+            # Pull latest code
+            git pull origin main
+
+            # Rebuild Docker image
+            sudo docker build -t photography-backend .
+
+            # Stop and remove old container
+            sudo docker stop photography-api || true
+            sudo docker rm photography-api || true
+
+            # Start new container
+            sudo docker run -d \
+              --name photography-api \
+              --env-file .env \
+              -p 8000:8000 \
+              -v ~/photography-teaching-system/data:/app/data \
+              --restart unless-stopped \
+              photography-backend
+
+            # Verify deployment
+            sleep 5
+            curl -f http://localhost:8000/health || exit 1
+
+            echo "✅ Deployment successful!"
