@@ -15,6 +15,7 @@ import threading
 import uuid
 from dataclasses import dataclass, field
 
+from backend.core.i18n import LanguageCode
 from backend.core.interview import InterviewAgent
 from backend.models.profile import UserProfile
 from backend.models.teaching import EvaluationReport, LessonPlan
@@ -30,6 +31,7 @@ _teaching_sessions:   dict[str, "TeachingSession"]   = {}
 class InterviewSession:
     session_id: str
     agent: InterviewAgent
+    language: LanguageCode = "en-GB"
 
 
 @dataclass
@@ -38,13 +40,14 @@ class TeachingSession:
     profile: UserProfile
     lesson_plan: LessonPlan | None = None
     last_report: EvaluationReport | None = None
+    language: LanguageCode = "en-GB"
 
 
 # ── Interview session management ──────────────────────────────────────────────
 
-def create_interview_session() -> InterviewSession:
-    agent = InterviewAgent()
-    session = InterviewSession(session_id=str(uuid.uuid4()), agent=agent)
+def create_interview_session(language: LanguageCode = "en-GB") -> InterviewSession:
+    agent = InterviewAgent(language=language)
+    session = InterviewSession(session_id=str(uuid.uuid4()), agent=agent, language=language)
     with _lock:
         _interview_sessions[session.session_id] = session
     return session
@@ -65,8 +68,8 @@ def delete_interview_session(session_id: str) -> None:
 
 # ── Teaching session management ───────────────────────────────────────────────
 
-def create_teaching_session(profile: UserProfile) -> TeachingSession:
-    session = TeachingSession(session_id=str(uuid.uuid4()), profile=profile)
+def create_teaching_session(profile: UserProfile, language: LanguageCode = "en-GB") -> TeachingSession:
+    session = TeachingSession(session_id=str(uuid.uuid4()), profile=profile, language=language)
     with _lock:
         _teaching_sessions[session.session_id] = session
     return session

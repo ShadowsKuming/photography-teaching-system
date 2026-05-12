@@ -20,7 +20,7 @@ from __future__ import annotations
 from PIL import Image
 
 from backend.models.profile import UserProfile
-from backend.models.session import LiveSessionContext, SessionBlockResult
+from backend.models.session import LiveSessionContext, SessionBlockResult, TargetSkill
 from backend.models.teaching import (
     EvaluationReport,
     FeedbackMessage,
@@ -28,6 +28,7 @@ from backend.models.teaching import (
     LessonPlan,
 )
 from backend.core import evaluator as eval_module
+from backend.core.i18n import LanguageCode, language_instruction, localized_reason
 from backend.core.llm import call_text_json, call_text
 from backend.core.progression import (
     apply_progression,
@@ -122,16 +123,18 @@ def _analyse_gap(
     live_ctx: LiveSessionContext,
     lesson_plan: LessonPlan,
     teaching_brief: str | None = None,
+    language: LanguageCode = "en-GB",
 ) -> GapAnalysis:
     skill = lesson_plan.target_skill
     focus_obs = report.get(skill)
     dim = profile.skill_state.get(skill)
 
-    gap_system = (
+    gap_system_base = (
         f"{teaching_brief}\n\n---\n\n{_GAP_SYSTEM_BASE}"
         if teaching_brief
         else _GAP_SYSTEM_BASE
     )
+    gap_system = f"{gap_system_base}\n\n{language_instruction(language)}"
 
     messages = [
         {"role": "system", "content": gap_system},
@@ -180,14 +183,16 @@ def _generate_feedback(
     gap: GapAnalysis,
     lesson_plan: LessonPlan,
     teaching_brief: str | None = None,
+    language: LanguageCode = "en-GB",
 ) -> FeedbackMessage:
     dim = profile.skill_state.get(lesson_plan.target_skill)
 
-    feedback_system = (
+    feedback_system_base = (
         f"{teaching_brief}\n\n---\n\n{_FEEDBACK_SYSTEM_BASE}"
         if teaching_brief
         else _FEEDBACK_SYSTEM_BASE
     )
+    feedback_system = f"{feedback_system_base}\n\n{language_instruction(language)}"
 
     messages = [
         {"role": "system", "content": feedback_system},
@@ -222,9 +227,9 @@ def _generate_feedback(
     )
 
 
-def _to_prose(feedback: FeedbackMessage) -> str:
+def _to_prose(feedback: FeedbackMessage, language: LanguageCode = "en-GB") -> str:
     messages = [
-        {"role": "system", "content": _PROSE_SYSTEM},
+        {"role": "system", "content": f"{_PROSE_SYSTEM}\n\n{language_instruction(language)}"},
         {"role": "user", "content": _PROSE_PROMPT.format(
             acknowledgment=feedback.acknowledgment,
             focus=feedback.focus,
@@ -234,6 +239,23 @@ def _to_prose(feedback: FeedbackMessage) -> str:
         )},
     ]
     return call_text(messages).strip()
+
+
+def _build_scores(
+    report: EvaluationReport, target_skill: TargetSkill
+) -> tuple[int, int, dict[TargetSkill, int | None]]:
+    dimension_scores: dict[TargetSkill, int | None] = {
+        "composition": report.composition.score,
+        "lighting": report.lighting.score,
+        "subject_clarity": report.subject_clarity.score,
+        "pose_expression": report.pose_expression.score,
+        "background_control": report.background_control.score,
+    }
+    valid_scores = [v for v in dimension_scores.values() if v is not None]
+    overall = round(sum(valid_scores) / len(valid_scores)) if valid_scores else 0
+    focus = dimension_scores.get(target_skill)
+    focus_score = focus if focus is not None else overall
+    return overall, focus_score, dimension_scores
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -246,6 +268,7 @@ def complete_session_block(
     shot_intent: str | None = None,
     prev_report: EvaluationReport | None = None,
     teaching_brief: str | None = None,
+    language: LanguageCode = "en-GB",
 ) -> tuple[SessionBlockResult, UserProfile]:
     """
     Run the full post-shot pipeline for one session block.
@@ -276,13 +299,13 @@ def complete_session_block(
     attempt_result = decide_attempt_result(live_ctx, report)
 
     # Step 3 — Gap analysis (LLM)
-    gap = _analyse_gap(profile, report, live_ctx, lesson_plan, teaching_brief)
+    gap = _analyse_gap(profile, report, live_ctx, lesson_plan, teaching_brief, language)
 
     # Step 4 — Structured feedback (LLM)
-    feedback_struct = _generate_feedback(profile, gap, lesson_plan, teaching_brief)
+    feedback_struct = _generate_feedback(profile, gap, lesson_plan, teaching_brief, language)
 
     # Step 5 — Convert to prose (LLM)
-    feedback_prose = _to_prose(feedback_struct)
+    feedback_prose = _to_prose(feedback_struct, language)
 
     # Step 6 — Update profile (deterministic)
     updated_profile, skill_level_changed, milestone_changed = apply_progression(
@@ -297,17 +320,15 @@ def complete_session_block(
         is_diagnostic=profile.is_diagnostic,
     )
 
-    reason_map = {
-        "advance":      "Great work — ready to move on.",
-        "guided_retry": "You're making progress — one more focused attempt.",
-        "retry":        "Let's try again with fresh eyes.",
-        "end_lesson":   "You've done excellent work today.",
-    }
+    overall_score, focus_score, dimension_scores = _build_scores(report, target_skill)
 
     return SessionBlockResult(
         feedback_text=feedback_prose,
+        overall_score=overall_score,
+        focus_score=focus_score,
+        dimension_scores=dimension_scores,
         recommended_action=recommended,
-        reason=reason_map[recommended],
+        reason=localized_reason(recommended, language),
         skill_updated=skill_level_changed,
         milestone_reached=milestone_changed,
         is_diagnostic=profile.is_diagnostic,

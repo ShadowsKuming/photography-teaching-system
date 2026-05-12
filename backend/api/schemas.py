@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from backend.core.i18n import LanguageCode
 from backend.models.profile import (
     DeviceConstraint,
     DeviceType,
@@ -24,6 +25,10 @@ from backend.models.teaching import LessonPlan
 
 # ── Interview ─────────────────────────────────────────────────────────────────
 
+class InterviewStartRequest(BaseModel):
+    language: LanguageCode = "en-GB"
+
+
 class InterviewStartResponse(BaseModel):
     session_id: str
     opening_message: str
@@ -31,6 +36,7 @@ class InterviewStartResponse(BaseModel):
 
 class InterviewChatRequest(BaseModel):
     message: str
+    language: LanguageCode | None = None
 
 
 class InterviewChatResponse(BaseModel):
@@ -42,6 +48,7 @@ class InterviewChatResponse(BaseModel):
 
 class InterviewStyleRequest(BaseModel):
     selected_styles: list[StyleName]
+    language: LanguageCode | None = None
 
 
 class InterviewStyleResponse(BaseModel):
@@ -51,6 +58,7 @@ class InterviewStyleResponse(BaseModel):
 
 class InterviewNameRequest(BaseModel):
     name: str
+    language: LanguageCode | None = None
 
 
 class InterviewNameResponse(BaseModel):
@@ -66,6 +74,7 @@ class InterviewCompleteResponse(BaseModel):
 
 class TeachStartRequest(BaseModel):
     name: str  # load existing profile by name
+    language: LanguageCode = "en-GB"
 
 
 class TeachStartResponse(BaseModel):
@@ -102,6 +111,7 @@ class LiveFinalStateSchema(BaseModel):
 
 class LiveContextSchema(BaseModel):
     """Loose schema for incoming live context from frontend."""
+
     target_skill: TargetSkill
     observed_issues: list[LiveIssueSchema] = Field(default_factory=list)
     events: list[LiveEventSchema] = Field(default_factory=list)
@@ -113,10 +123,14 @@ class TeachSubmitRequest(BaseModel):
     image_base64: str          # base64-encoded JPEG
     live_context: LiveContextSchema
     shot_intent: str | None = None
+    language: LanguageCode | None = None
 
 
 class TeachSubmitResponse(BaseModel):
     feedback_text: str
+    overall_score: int
+    focus_score: int
+    dimension_scores: dict[TargetSkill, int | None]
     recommended_action: RecommendedAction
     reason: str
     skill_updated: bool
@@ -127,6 +141,10 @@ class TeachSubmitResponse(BaseModel):
 
 class TeachNextResponse(BaseModel):
     lesson_plan: LessonPlan
+
+
+class TeachNextRequest(BaseModel):
+    language: LanguageCode | None = None
 
 
 class SkillLevelOut(BaseModel):

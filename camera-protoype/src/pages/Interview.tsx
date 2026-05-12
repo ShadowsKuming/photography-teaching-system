@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ChatBubble } from '../components/ChatBubble'
 import { StyleGrid } from '../components/StyleGrid'
 import { useInterview } from '../hooks/useInterview'
+import { useI18n } from '../i18n'
 import type { Profile, StyleName } from '../types'
 
 interface Props {
@@ -11,17 +12,24 @@ interface Props {
 type InputMode = 'chat' | 'name'
 
 export function Interview({ onComplete }: Props) {
+  const { locale, copy } = useI18n()
   const {
     messages, interviewState, isLoading, error,
     showStyleGrid, profile,
     start, send, selectStyles, submitName, finalise,
-  } = useInterview()
+  } = useInterview(locale)
 
   const [inputMode, setInputMode] = useState<InputMode>('chat')
   const [text, setText] = useState('')
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const messagesRef = useRef<HTMLElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const startedRef = useRef(false)
+
+  const scrollToBottom = () => {
+    const container = messagesRef.current
+    if (!container) return
+    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
+  }
 
   // Start interview once
   useEffect(() => {
@@ -47,8 +55,8 @@ export function Interview({ onComplete }: Props) {
 
   // Scroll to bottom on new messages
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, showStyleGrid])
+    requestAnimationFrame(scrollToBottom)
+  }, [messages, showStyleGrid, isLoading, error])
 
   const handleSend = () => {
     const trimmed = text.trim()
@@ -75,14 +83,14 @@ export function Interview({ onComplete }: Props) {
         <div className="flex items-center gap-2">
           <span className="text-lg">📷</span>
           <div>
-            <p className="text-xs font-medium text-indigo-400">Photography Coach</p>
-            <p className="text-sm font-semibold">Getting to know you</p>
+            <p className="text-xs font-medium text-indigo-400">{copy.appName}</p>
+            <p className="text-sm font-semibold">{copy.interviewTitle}</p>
           </div>
         </div>
       </header>
 
       {/* Messages */}
-      <main className="flex-1 overflow-y-auto px-4 py-4">
+      <main ref={messagesRef} className="flex-1 overflow-y-auto px-4 py-4">
         <div className="mx-auto max-w-xl space-y-3">
           {messages.map((m, i) => (
             <ChatBubble key={i} role={m.role} content={m.content} />
@@ -107,8 +115,6 @@ export function Interview({ onComplete }: Props) {
           {error && (
             <p className="text-center text-xs text-red-400">{error}</p>
           )}
-
-          <div ref={bottomRef} />
         </div>
       </main>
 
@@ -124,7 +130,7 @@ export function Interview({ onComplete }: Props) {
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder={inputMode === 'name' ? 'Enter your first name…' : 'Type a message…'}
+            placeholder={inputMode === 'name' ? copy.interviewNamePlaceholder : copy.interviewChatPlaceholder}
             disabled={isLoading || showStyleGrid}
             className="flex-1 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-40"
           />
@@ -134,7 +140,7 @@ export function Interview({ onComplete }: Props) {
             disabled={!text.trim() || isLoading || showStyleGrid}
             className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-40"
           >
-            Send
+            {copy.interviewSend}
           </button>
         </div>
       </div>

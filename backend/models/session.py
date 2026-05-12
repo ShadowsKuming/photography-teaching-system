@@ -160,6 +160,9 @@ class SessionBlockResult(BaseModel):
       end_lesson            →  "End lesson"
     """
     feedback_text: str
+    overall_score: int = Field(ge=0, le=100)
+    focus_score: int = Field(ge=0, le=100)
+    dimension_scores: dict[TargetSkill, int | None]
     recommended_action: RecommendedAction
     reason: str                         # one sentence shown to student
     skill_updated: bool = False

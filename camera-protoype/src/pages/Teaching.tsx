@@ -1,9 +1,19 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Camera } from '../components/Camera'
-import { SkillProgress } from '../components/SkillProgress'
 import { useTeaching } from '../hooks/useTeaching'
+import { ProfileSheet } from './teaching/components/ProfileSheet'
+import { SubmissionOutcome } from './teaching/components/SubmissionOutcome'
+import { TargetSkillTrack } from './teaching/components/TargetSkillTrack'
 import { buildMinimalLiveCtx } from '../types'
 import type { RecommendedAction } from '../types'
+import { useI18n } from '../i18n'
+
+function avatarInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase()
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
+}
 
 interface Props {
   studentName: string
@@ -11,22 +21,32 @@ interface Props {
 
 type Step = 'lesson' | 'camera' | 'intent' | 'evaluating' | 'feedback'
 
-const ACTION_LABELS: Record<RecommendedAction, string> = {
-  retry:        'Try again',
-  guided_retry: 'Try again',
-  advance:      'Next challenge',
-  end_lesson:   'End lesson',
-}
-
 export function Teaching({ studentName }: Props) {
+  const { locale, copy } = useI18n()
+  const actionLabels: Record<RecommendedAction, string> = {
+    retry: copy.actionRetry,
+    guided_retry: copy.actionRetry,
+    advance: copy.actionAdvance,
+    end_lesson: copy.actionEndLesson,
+  }
   const { profile, lessonPlan, result, isLoading, error, submitPhoto, nextLesson } =
-    useTeaching(studentName)
+    useTeaching(studentName, locale)
 
   const [step, setStep] = useState<Step>('lesson')
   const [capturedImage, setCapturedImage] = useState<string | null>(null)   // base64
   const [shotIntent, setShotIntent] = useState('')
-  const [showProgress, setShowProgress] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
+  const contentRef = useRef<HTMLElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const scrollToBottom = () => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }
+
+  useEffect(() => {
+    requestAnimationFrame(scrollToBottom)
+  }, [step, result, isLoading, error, capturedImage])
 
   // ── Camera handlers ────────────────────────────────────────────────────────
   const handleCapture = (base64: string) => {
@@ -62,6 +82,8 @@ export function Teaching({ studentName }: Props) {
     const liveCtx = buildMinimalLiveCtx(lessonPlan.target_skill)
     await submitPhoto(capturedImage, liveCtx, shotIntent || undefined)
     setStep('feedback')
+    requestAnimationFrame(scrollToBottom)
+    setTimeout(scrollToBottom, 120)
   }
 
   // ── Action button ──────────────────────────────────────────────────────────
@@ -82,7 +104,7 @@ export function Teaching({ studentName }: Props) {
         {error ? (
           <p className="max-w-xs text-center text-sm text-red-400">{error}</p>
         ) : (
-          <p className="text-sm text-slate-400 animate-pulse">Preparing your lesson…</p>
+          <p className="text-sm text-slate-400 animate-pulse">{copy.teachingPreparingLesson}</p>
         )}
       </div>
     )
@@ -101,7 +123,7 @@ export function Teaching({ studentName }: Props) {
 
   // ── Main UI ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex min-h-dvh flex-col bg-slate-950 text-white">
+    <div className="flex h-dvh max-h-dvh flex-col overflow-hidden bg-slate-950 text-white">
       {/* Header */}
       <header
         className="shrink-0 border-b border-slate-800 bg-slate-900/80 px-4 py-3 backdrop-blur-md"
@@ -119,31 +141,34 @@ export function Teaching({ studentName }: Props) {
           </div>
           <button
             type="button"
-            onClick={() => setShowProgress((v) => !v)}
-            className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-400 transition hover:border-slate-500 hover:text-white"
+            onClick={() => setShowProfile(true)}
+            aria-label="Open your progress"
+            className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-sm font-bold text-white shadow-md shadow-indigo-600/30 ring-1 ring-white/10 transition active:scale-95"
           >
-            Progress
+            {avatarInitials(studentName)}
           </button>
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-4 py-5">
-        <div className="mx-auto max-w-xl space-y-4">
+      <ProfileSheet
+        open={showProfile}
+        profile={profile}
+        onClose={() => setShowProfile(false)}
+        locale={locale}
+      />
 
-          {/* Progress panel */}
-          {showProgress && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Your progress
-              </p>
-              <SkillProgress profile={profile} />
-            </div>
-          )}
+      <main ref={contentRef} className="flex-1 overflow-y-auto px-4 py-5">
+        <div className="mx-auto max-w-xl space-y-4">
+          <TargetSkillTrack
+            targetSkill={lessonPlan.target_skill}
+            currentLevel={profile.skill_state[lessonPlan.target_skill].level}
+            primarySubject={profile.primary_subject}
+          />
 
           {/* Lesson card */}
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
             <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-indigo-400">
-              Today's focus
+              {copy.teachingTodaysFocus}
             </p>
             <p className="text-sm leading-relaxed text-slate-300">{lessonPlan.concept}</p>
           </div>
@@ -151,7 +176,7 @@ export function Teaching({ studentName }: Props) {
           {/* Assignment card */}
           <div className="rounded-2xl border border-indigo-900/50 bg-indigo-950/40 p-4">
             <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-indigo-400">
-              Your assignment
+              {copy.teachingYourAssignment}
             </p>
             <p className="text-sm font-medium leading-relaxed text-white">{lessonPlan.assignment}</p>
           </div>
@@ -174,7 +199,7 @@ export function Teaching({ studentName }: Props) {
               <textarea
                 value={shotIntent}
                 onChange={(e) => setShotIntent(e.target.value)}
-                placeholder="What were you trying to achieve with this shot? (optional)"
+                placeholder={copy.teachingIntentPlaceholder}
                 rows={2}
                 className="w-full resize-none rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
               />
@@ -183,7 +208,7 @@ export function Teaching({ studentName }: Props) {
                 onClick={handleSubmit}
                 className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500 active:scale-95"
               >
-                Submit for feedback
+                {copy.teachingSubmitForFeedback}
               </button>
             </div>
           )}
@@ -191,16 +216,18 @@ export function Teaching({ studentName }: Props) {
           {/* Evaluating spinner */}
           {step === 'evaluating' && (
             <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center">
-              <p className="animate-pulse text-sm text-slate-400">Analysing your photo…</p>
+              <p className="animate-pulse text-sm text-slate-400">{copy.teachingAnalysingPhoto}</p>
             </div>
           )}
 
           {/* Feedback */}
           {step === 'feedback' && result && (
             <div className="space-y-3">
+              <SubmissionOutcome result={result} />
+
               <div className="rounded-2xl border border-slate-700 bg-slate-900 p-4">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Feedback
+                  {copy.teachingFeedback}
                 </p>
                 <p className="text-sm leading-relaxed text-slate-200">{result.feedback_text}</p>
               </div>
@@ -208,7 +235,7 @@ export function Teaching({ studentName }: Props) {
               {result.milestone_reached && (
                 <div className="rounded-2xl border border-amber-700/50 bg-amber-950/40 p-3 text-center">
                   <p className="text-sm font-semibold text-amber-400">
-                    Milestone reached: {result.current_milestone}!
+                    {copy.teachingMilestoneReached(result.current_milestone)}
                   </p>
                 </div>
               )}
@@ -221,10 +248,11 @@ export function Teaching({ studentName }: Props) {
                 disabled={isLoading}
                 className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-40 active:scale-95"
               >
-                {isLoading ? 'Loading…' : ACTION_LABELS[result.recommended_action]}
+                {isLoading ? copy.teachingLoading : actionLabels[result.recommended_action]}
               </button>
             </div>
           )}
+          <div ref={bottomRef} />
         </div>
       </main>
 
@@ -242,7 +270,7 @@ export function Teaching({ studentName }: Props) {
               className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-indigo-600 py-4 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 transition hover:bg-indigo-500 active:scale-95"
             >
               <span className="text-lg" aria-hidden>📷</span>
-              Take photo
+              {copy.teachingTakePhoto}
             </button>
 
             {/* Upload photo */}
@@ -252,7 +280,7 @@ export function Teaching({ studentName }: Props) {
               className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-600 bg-slate-800 py-4 text-sm font-semibold text-slate-200 transition hover:border-slate-400 hover:text-white active:scale-95"
             >
               <span className="text-lg" aria-hidden>🖼</span>
-              Upload photo
+              {copy.teachingUploadPhoto}
             </button>
           </div>
 
@@ -279,14 +307,14 @@ export function Teaching({ studentName }: Props) {
               onClick={() => { setCapturedImage(null); setStep('camera') }}
               className="flex-1 rounded-xl border border-slate-700 py-2.5 text-xs text-slate-400 transition hover:border-slate-500 hover:text-white"
             >
-              Retake
+              {copy.teachingRetake}
             </button>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="flex-1 rounded-xl border border-slate-700 py-2.5 text-xs text-slate-400 transition hover:border-slate-500 hover:text-white"
             >
-              Choose file
+              {copy.teachingChooseFile}
             </button>
           </div>
           <input

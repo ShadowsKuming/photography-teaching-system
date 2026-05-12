@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from backend.core.llm import call_text, call_text_json
+from backend.core.i18n import LanguageCode, language_instruction
 from backend.models.profile import (
     Device,
     MilestoneState,
@@ -125,6 +126,7 @@ class InterviewTurn:
 
 @dataclass
 class InterviewAgent:
+    language: LanguageCode = "en-GB"
     state: InterviewState = "chatting"
     history: list[dict] = field(default_factory=list)
     style_selection: list[str] = field(default_factory=list)
@@ -133,14 +135,21 @@ class InterviewAgent:
 
     def __post_init__(self):
         # Seed with system prompt
-        self.history = [{"role": "system", "content": _SYSTEM}]
+        self.history = [{"role": "system", "content": f"{_SYSTEM}\n\n{language_instruction(self.language)}"}]
         # Generate opening message
-        opening = call_text(self.history + [{
+        opening = call_text(self._with_language(self.history + [{
             "role": "user",
             "content": "[The student has just opened the app for the first time. Greet them warmly and ask your first question.]"
-        }])
+        }]))
         self.history.append({"role": "assistant", "content": opening})
         self._opening = opening
+
+    def _with_language(self, messages: list[dict]) -> list[dict]:
+        """Append explicit language guardrail to each generation call."""
+        return messages + [{"role": "system", "content": language_instruction(self.language)}]
+
+    def set_language(self, language: LanguageCode) -> None:
+        self.language = language
 
     @property
     def opening_message(self) -> str:
@@ -149,7 +158,8 @@ class InterviewAgent:
     def chat(self, user_message: str) -> InterviewTurn:
         """Process a student message. Returns the agent's reply and state flags."""
         if self.state == "complete":
-            return InterviewTurn(reply="Your profile is ready!", is_complete=True, state="complete")
+            ready = "Seu perfil esta pronto!" if self.language == "pt-BR" else "Your profile is ready!"
+            return InterviewTurn(reply=ready, is_complete=True, state="complete")
 
         self.history.append({"role": "user", "content": user_message})
         self._turn_count += 1
@@ -157,14 +167,14 @@ class InterviewAgent:
         # After 3 turns of chatting, transition to style grid
         if self.state == "chatting" and self._turn_count >= 3:
             transition = call_text(
-                self.history + [{"role": "user", "content": _STYLE_PROMPT}]
+                self._with_language(self.history + [{"role": "user", "content": _STYLE_PROMPT}])
             )
             self.history.append({"role": "assistant", "content": transition})
             self.state = "style_shown"
             return InterviewTurn(reply=transition, show_style_grid=True, state="style_shown")
 
         # Normal conversation turn
-        reply = call_text(self.history)
+        reply = call_text(self._with_language(self.history))
         self.history.append({"role": "assistant", "content": reply})
 
         return InterviewTurn(reply=reply, state=self.state)
@@ -175,7 +185,7 @@ class InterviewAgent:
         self.style_selection = valid if valid else [_STYLE_NAMES[0]]
 
         prompt = _NAME_PROMPT_AFTER_STYLE.format(styles=", ".join(self.style_selection))
-        reply = call_text(self.history + [{"role": "user", "content": prompt}])
+        reply = call_text(self._with_language(self.history + [{"role": "user", "content": prompt}]))
 
         self.history.append({"role": "user", "content": f"[Selected styles: {', '.join(self.style_selection)}]"})
         self.history.append({"role": "assistant", "content": reply})
@@ -188,7 +198,9 @@ class InterviewAgent:
         self.student_name = name.strip()
 
         wrap = call_text(
-            self.history + [{"role": "user", "content": _WRAP_PROMPT.format(name=self.student_name)}]
+            self._with_language(
+                self.history + [{"role": "user", "content": _WRAP_PROMPT.format(name=self.student_name)}]
+            )
         )
         self.history.append({"role": "user", "content": self.student_name})
         self.history.append({"role": "assistant", "content": wrap})
@@ -224,11 +236,11 @@ class InterviewAgent:
         }
 
         data = call_text_json(
-            messages=[{"role": "user", "content": _EXTRACT_PROMPT.format(
+            messages=self._with_language([{"role": "user", "content": _EXTRACT_PROMPT.format(
                 conversation=conversation_text,
                 styles=", ".join(self.style_selection),
                 name=self.student_name,
-            )}],
+            )}]),
             fallback=fallback,
         )
 

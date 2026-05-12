@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import * as api from '../api/client'
 import type { ChatMessage, InterviewState, Profile, StyleName } from '../types'
+import type { AppLocale } from '../i18n'
 
 export interface UseInterviewReturn {
   messages: ChatMessage[]
@@ -18,7 +19,7 @@ export interface UseInterviewReturn {
   finalise: () => Promise<void>
 }
 
-export function useInterview(): UseInterviewReturn {
+export function useInterview(locale: AppLocale): UseInterviewReturn {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [interviewState, setInterviewState] = useState<InterviewState>('chatting')
   const [isLoading, setIsLoading] = useState(false)
@@ -37,7 +38,7 @@ export function useInterview(): UseInterviewReturn {
     setIsLoading(true)
     setError(null)
     try {
-      const res = await api.interviewStart()
+      const res = await api.interviewStart(locale)
       sessionIdRef.current = res.session_id
       pushAssistant(res.opening_message)
     } catch (e) {
@@ -45,7 +46,7 @@ export function useInterview(): UseInterviewReturn {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [locale])
 
   const send = useCallback(async (message: string) => {
     if (!sessionIdRef.current) return
@@ -53,7 +54,7 @@ export function useInterview(): UseInterviewReturn {
     setIsLoading(true)
     setError(null)
     try {
-      const res = await api.interviewChat(sessionIdRef.current, message)
+      const res = await api.interviewChat(sessionIdRef.current, message, locale)
       pushAssistant(res.reply)
       setInterviewState(res.state as InterviewState)
       if (res.show_style_grid) setShowStyleGrid(true)
@@ -62,14 +63,14 @@ export function useInterview(): UseInterviewReturn {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [locale])
 
   const selectStyles = useCallback(async (styles: StyleName[]) => {
     if (!sessionIdRef.current) return
     setIsLoading(true)
     setError(null)
     try {
-      const res = await api.interviewStyle(sessionIdRef.current, styles)
+      const res = await api.interviewStyle(sessionIdRef.current, styles, locale)
       pushAssistant(res.reply)
       setInterviewState(res.state as InterviewState)
       setShowStyleGrid(false)
@@ -78,14 +79,14 @@ export function useInterview(): UseInterviewReturn {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [locale])
 
   const submitName = useCallback(async (name: string) => {
     if (!sessionIdRef.current) return
     setIsLoading(true)
     setError(null)
     try {
-      const res = await api.interviewName(sessionIdRef.current, name)
+      const res = await api.interviewName(sessionIdRef.current, name, locale)
       pushAssistant(res.reply)
       if (res.is_complete) setInterviewState('complete')
     } catch (e) {
@@ -93,7 +94,7 @@ export function useInterview(): UseInterviewReturn {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [locale])
 
   const finalise = useCallback(async () => {
     if (!sessionIdRef.current) return

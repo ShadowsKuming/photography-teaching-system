@@ -20,11 +20,13 @@ from backend.api.schemas import (
     ProfileResponse,
     SkillLevelOut,
     TeachNextResponse,
+    TeachNextRequest,
     TeachStartRequest,
     TeachStartResponse,
     TeachSubmitRequest,
     TeachSubmitResponse,
 )
+from backend.core.i18n import normalize_language
 from backend.api.sessions import (
     create_teaching_session,
     get_teaching_session,
@@ -127,14 +129,16 @@ def start_teaching(body: TeachStartRequest):
     Load an existing profile by name and create a teaching session.
     Generates the first lesson plan immediately.
     """
+    language = normalize_language(body.language)
+
     try:
         profile = load_profile(body.name)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"No profile found for '{body.name}'")
 
     brief = load_brief(body.name)
-    lesson_plan = plan_lesson(profile, teaching_brief=brief)
-    session = create_teaching_session(profile)
+    lesson_plan = plan_lesson(profile, teaching_brief=brief, language=language)
+    session = create_teaching_session(profile, language=language)
     session.lesson_plan = lesson_plan
     update_teaching_session(session)
 
@@ -160,6 +164,11 @@ def submit_photo(session_id: str, body: TeachSubmitRequest):
     if session.lesson_plan is None:
         raise HTTPException(status_code=400, detail="No active lesson plan — call /teach/start first")
 
+    language = session.language
+    if body.language is not None:
+        language = normalize_language(body.language)
+        session.language = language
+
     image = _decode_image(body.image_base64)
     live_ctx = _parse_live_context(body.live_context)
 
@@ -173,6 +182,7 @@ def submit_photo(session_id: str, body: TeachSubmitRequest):
         shot_intent=body.shot_intent,
         prev_report=session.last_report,
         teaching_brief=brief,
+        language=language,
     )
 
     # Persist updated profile and update session
@@ -184,6 +194,9 @@ def submit_photo(session_id: str, body: TeachSubmitRequest):
 
     return TeachSubmitResponse(
         feedback_text=result.feedback_text,
+        overall_score=result.overall_score,
+        focus_score=result.focus_score,
+        dimension_scores=result.dimension_scores,
         recommended_action=result.recommended_action,
         reason=result.reason,
         skill_updated=result.skill_updated,
@@ -194,7 +207,7 @@ def submit_photo(session_id: str, body: TeachSubmitRequest):
 
 
 @router.post("/{session_id}/next", response_model=TeachNextResponse)
-def next_lesson(session_id: str):
+def next_lesson(session_id: str, body: TeachNextRequest | None = None):
     """
     Generate the next lesson plan (called after 'advance' or 'end_lesson').
     The planner automatically selects the next target skill.
@@ -204,8 +217,11 @@ def next_lesson(session_id: str):
     except KeyError:
         raise HTTPException(status_code=404, detail="Teaching session not found")
 
+    if body and body.language is not None:
+        session.language = normalize_language(body.language)
+
     brief = load_brief(session.profile.name)
-    lesson_plan = plan_lesson(session.profile, teaching_brief=brief)
+    lesson_plan = plan_lesson(session.profile, teaching_brief=brief, language=session.language)
     session.lesson_plan = lesson_plan
     update_teaching_session(session)
 

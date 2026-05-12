@@ -16,6 +16,7 @@ from backend.models.teaching import (
     SKILL_DEFINITIONS,
     LessonPlan,
 )
+from backend.core.i18n import LanguageCode, language_instruction
 from backend.core.llm import call_text_json
 from backend.core.progression import is_stuck_on_skill, select_target_skill
 
@@ -54,6 +55,7 @@ def plan_lesson(
     profile: UserProfile,
     target_skill: TargetSkill | None = None,
     teaching_brief: str | None = None,
+    language: LanguageCode = "en-GB",
 ) -> LessonPlan:
     """
     Generate a lesson plan for the student's next session block.
@@ -86,11 +88,12 @@ def plan_lesson(
         f"goal: {profile.primary_goal}"
     )
 
-    planner_system = (
+    base_system = (
         f"{teaching_brief}\n\n---\n\n{_SYSTEM_BASE}"
         if teaching_brief
         else _SYSTEM_BASE
     )
+    planner_system = f"{base_system}\n\n{language_instruction(language)}"
 
     messages = [
         {"role": "system", "content": planner_system},
