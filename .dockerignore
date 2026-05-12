@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+
+# Node
+node_modules/
+camera-protoype/node_modules/
+camera-protoype/dist/
+camera-protoype/build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Environment
+.env
+.env.local
+
+# Database (will be in volume)
+*.db
+profiles/
+
+# Docs
+*.md
+INTEGRATION_GUIDE.md
+
+# Misc
+tmp/
+*.log
+.DS_Store

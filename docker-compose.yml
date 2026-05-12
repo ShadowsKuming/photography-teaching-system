@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - TEXT_LLM_PROVIDER=${TEXT_LLM_PROVIDER:-openai}
+      - VISION_LLM_PROVIDER=${VISION_LLM_PROVIDER:-openai}
+      - TEXT_MODEL=${TEXT_MODEL:-gpt-4o-mini}
+      - VISION_MODEL=${VISION_MODEL:-gpt-4o}
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=8000
+    volumes:
+      # Persist database and profiles
+      - ./data:/app/data
+      # Mount database.db to data directory
+      - ./database.db:/app/data/database.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./camera-protoype
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  app-data:
