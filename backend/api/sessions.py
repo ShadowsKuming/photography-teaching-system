@@ -16,23 +16,21 @@ import sqlite3
 import time
 import uuid
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Optional
 
 from backend.core.i18n import LanguageCode, normalize_language
 from backend.core.interview import InterviewAgent
 from backend.models.profile import UserProfile
 from backend.models.teaching import EvaluationReport, LessonPlan
-from backend.core.db import _lock
+from backend.core.db import _lock, database_path
 
 # ── Database setup ──────────────────────────────────────────────────────────
 
-_DB_PATH = Path(__file__).parent.parent.parent / "database.db"
 _SESSION_EXPIRY_HOURS = 24
 
 def _get_db() -> sqlite3.Connection:
     """Get database connection with row factory."""
-    conn = sqlite3.connect(_DB_PATH, check_same_thread=False)
+    conn = sqlite3.connect(database_path(), check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
 

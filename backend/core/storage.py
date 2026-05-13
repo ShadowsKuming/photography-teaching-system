@@ -13,18 +13,15 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from pathlib import Path
 
 from backend.models.profile import UserProfile
 from backend.core.brief import build_teaching_brief
-from backend.core.db import _lock
-
-_DB_PATH = Path(__file__).parent.parent.parent / "database.db"
+from backend.core.db import _lock, database_path
 
 
 def _get_db() -> sqlite3.Connection:
     """Get database connection. Thread-safe via _lock in calling functions."""
-    conn = sqlite3.connect(_DB_PATH, check_same_thread=False)
+    conn = sqlite3.connect(database_path(), check_same_thread=False)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS profiles (
             name TEXT PRIMARY KEY,
