@@ -29,9 +29,24 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            # Rebuild and restart backend
-            sudo docker-compose build backend
-            sudo docker-compose up -d --force-recreate backend
+            # Rebuild image
+            sudo docker build -t photography-backend .
+
+            # Stop whichever container owns port 8000
+            CONTAINER=$(sudo docker ps --filter "publish=8000" --format "{{.Names}}" | head -1)
+            if [ -n "$CONTAINER" ]; then
+              sudo docker stop "$CONTAINER"
+              sudo docker rm "$CONTAINER"
+            fi
+
+            # Start new container with EBS volume at /data
+            sudo docker run -d \
+              --name photography-api \
+              --env-file .env \
+              -p 8000:8000 \
+              -v /data:/app/data \
+              --restart unless-stopped \
+              photography-backend
 
             # Verify deployment
             sleep 8
