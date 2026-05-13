@@ -18,8 +18,8 @@ services:
       - BACKEND_PORT=8000
       - DATABASE_PATH=/app/data/database.db
     volumes:
-      # Persist SQLite (profiles + sessions) under ./data on the host
-      - ./data:/app/data
+      # Persist SQLite on the dedicated EBS volume mounted at /data
+      - /data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
