@@ -29,9 +29,24 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            # Rebuild and restart backend (no cache)
-            docker compose build --no-cache backend
-            docker compose up -d --force-recreate backend
+            # Build fresh image
+            sudo docker build -t photography-backend .
+
+            # Stop whichever container owns port 8000
+            CONTAINER=$(sudo docker ps --filter "publish=8000" --format "{{.Names}}" | head -1)
+            if [ -n "$CONTAINER" ]; then
+              sudo docker stop "$CONTAINER"
+              sudo docker rm "$CONTAINER"
+            fi
+
+            # Start new container
+            sudo docker run -d \
+              --name photography-api \
+              --env-file .env \
+              -p 8000:8000 \
+              -v ~/photography-teaching-system/data:/app/data \
+              --restart unless-stopped \
+              photography-backend
 
             # Verify deployment
             sleep 8
