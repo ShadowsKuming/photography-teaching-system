@@ -29,8 +29,8 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            # Rebuild and restart backend (no cache)
-            sudo docker-compose build --no-cache backend
+            # Rebuild and restart backend
+            sudo docker-compose build backend
             sudo docker-compose up -d --force-recreate backend
 
             # Verify deployment
