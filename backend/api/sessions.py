@@ -13,14 +13,13 @@ from __future__ import annotations
 
 import json
 import sqlite3
-import threading
 import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from backend.core.i18n import LanguageCode
+from backend.core.i18n import LanguageCode, normalize_language
 from backend.core.interview import InterviewAgent
 from backend.models.profile import UserProfile
 from backend.models.teaching import EvaluationReport, LessonPlan
@@ -80,6 +79,7 @@ class InterviewSession:
         """Serialize to dict for database storage."""
         return {
             "session_id": self.session_id,
+            "language": self.language,
             "agent_state": self.agent.state,
             "agent_history": self.agent.history,
             "agent_style_selection": self.agent.style_selection,
@@ -98,7 +98,9 @@ class InterviewSession:
         agent.student_name = data["agent_student_name"]
         agent._turn_count = data["agent_turn_count"]
         agent._opening = data["agent_opening"]
-        return cls(session_id=data["session_id"], agent=agent)
+        language = normalize_language(data.get("language"))
+        agent.set_language(language)
+        return cls(session_id=data["session_id"], agent=agent, language=language)
 
 
 @dataclass
@@ -113,6 +115,7 @@ class TeachingSession:
         """Serialize to dict for database storage."""
         return {
             "session_id": self.session_id,
+            "language": self.language,
             "profile": self.profile.model_dump(mode="json"),
             "lesson_plan": self.lesson_plan.model_dump(mode="json") if self.lesson_plan else None,
             "last_report": self.last_report.model_dump(mode="json") if self.last_report else None
@@ -124,11 +127,13 @@ class TeachingSession:
         profile = UserProfile.model_validate(data["profile"])
         lesson_plan = LessonPlan.model_validate(data["lesson_plan"]) if data["lesson_plan"] else None
         last_report = EvaluationReport.model_validate(data["last_report"]) if data["last_report"] else None
+        language = normalize_language(data.get("language"))
         return cls(
             session_id=data["session_id"],
             profile=profile,
             lesson_plan=lesson_plan,
-            last_report=last_report
+            last_report=last_report,
+            language=language,
         )
 
 
