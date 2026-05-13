@@ -221,11 +221,9 @@ Touching more than one file — this is the one change that crosses boundaries:
 
 ### Storage and persistence
 
-| What you want to change | Where to go | What to look for |
-|---|---|---|
-| Profile storage location | `backend/core/storage.py` | `_PROFILES_DIR` constant |
-| Switch from JSON files to a database | `backend/core/storage.py` | Replace `save_profile()` and `load_profile()` — nothing else needs to change |
-| Session persistence (currently in-memory only) | `backend/api/sessions.py` | Replace the dicts with a persistent store |
+- **Profile storage**: Stored in SQLite database (`database.db`) via `backend/core/storage.py`
+- **Session storage**: Stored in SQLite database (`database.db`) via `backend/api/sessions.py`
+- **Database location**: Root directory as `database.db` (contains both profiles and sessions tables)---
 
 ---
 

@@ -16,11 +16,10 @@ services:
       - VISION_MODEL=${VISION_MODEL:-gpt-4o}
       - BACKEND_HOST=0.0.0.0
       - BACKEND_PORT=8000
+      - DATABASE_PATH=/app/data/database.db
     volumes:
-      # Persist database and profiles
+      # Persist SQLite (profiles + sessions) under ./data on the host
       - ./data:/app/data
-      # Mount database.db to data directory
-      - ./database.db:/app/data/database.db
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
