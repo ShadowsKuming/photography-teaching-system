@@ -171,7 +171,7 @@ def apply_progression(
     )
 
     # After first real session, flip diagnostic flag
-    is_diagnostic = False if profile.is_diagnostic else profile.is_diagnostic
+    is_diagnostic = False
 
     updated = profile.model_copy(update={
         "skill_state":     new_skill_state,

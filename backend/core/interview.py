@@ -158,7 +158,9 @@ class InterviewAgent:
     def chat(self, user_message: str) -> InterviewTurn:
         """Process a student message. Returns the agent's reply and state flags."""
         if self.state == "complete":
-            ready = "Seu perfil esta pronto!" if self.language == "pt-BR" else "Your profile is ready!"
+            ready = call_text(self._with_language([
+                {"role": "user", "content": "The interview is complete. Tell the student their profile is ready (one short sentence)."}
+            ]))
             return InterviewTurn(reply=ready, is_complete=True, state="complete")
 
         self.history.append({"role": "user", "content": user_message})

@@ -65,6 +65,13 @@ def profile_exists(name: str) -> bool:
     return _profile_path(name).exists()
 
 
+def delete_profile(name: str) -> None:
+    _profile_path(name).unlink()
+    brief = _brief_path(name)
+    if brief.exists():
+        brief.unlink()
+
+
 def list_profiles() -> list[str]:
     if not _PROFILES_DIR.exists():
         return []

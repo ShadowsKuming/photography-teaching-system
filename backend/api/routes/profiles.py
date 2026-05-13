@@ -10,15 +10,10 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
-from backend.api.routes.teaching import _profile_response
-from backend.api.schemas import ProfileResponse
-from backend.core.storage import list_profiles, load_profile, profile_exists
-from pathlib import Path
-import re
+from backend.api.schemas import ProfileResponse, profile_to_response
+from backend.core.storage import delete_profile as storage_delete, list_profiles, load_profile, profile_exists
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
-
-_PROFILES_DIR = Path("profiles")
 
 
 @router.get("", response_model=list[str])
@@ -33,7 +28,7 @@ def get_profile(name: str):
     if not profile_exists(name):
         raise HTTPException(status_code=404, detail=f"No profile found for '{name}'")
     profile = load_profile(name)
-    return _profile_response(profile)
+    return profile_to_response(profile)
 
 
 @router.delete("/{name}")
@@ -41,7 +36,5 @@ def delete_profile(name: str):
     """Delete a student profile."""
     if not profile_exists(name):
         raise HTTPException(status_code=404, detail=f"No profile found for '{name}'")
-    slug = re.sub(r"\s+", "_", name.strip().lower())
-    path = _PROFILES_DIR / f"{slug}.json"
-    path.unlink()
+    storage_delete(name)
     return {"deleted": name}

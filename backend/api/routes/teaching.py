@@ -18,13 +18,13 @@ from PIL import Image
 
 from backend.api.schemas import (
     ProfileResponse,
-    SkillLevelOut,
     TeachNextResponse,
     TeachNextRequest,
     TeachStartRequest,
     TeachStartResponse,
     TeachSubmitRequest,
     TeachSubmitResponse,
+    profile_to_response,
 )
 from backend.core.i18n import normalize_language
 from backend.api.sessions import (
@@ -97,27 +97,6 @@ def _parse_live_context(schema) -> LiveSessionContext:
         events=events,
         final_capture_state=final_state,
         captures=captures,
-    )
-
-
-def _profile_response(profile) -> ProfileResponse:
-    return ProfileResponse(
-        name=profile.name,
-        primary_goal=profile.primary_goal,
-        primary_subject=profile.primary_subject,
-        style=profile.style_preference.selected_style,
-        milestone=profile.milestone_state.current_milestone,
-        skill_state={
-            skill: SkillLevelOut(
-                level=profile.skill_state.get(skill).level,
-                recent_attempts=profile.skill_state.get(skill).recent_attempts,
-            )
-            for skill in ["composition", "lighting", "subject_clarity",
-                          "pose_expression", "background_control"]
-        },
-        device_type=profile.device.type,
-        device_constraints=profile.device.constraints,
-        is_diagnostic=profile.is_diagnostic,
     )
 
 
@@ -236,4 +215,4 @@ def get_profile(session_id: str):
     except KeyError:
         raise HTTPException(status_code=404, detail="Teaching session not found")
 
-    return _profile_response(session.profile)
+    return profile_to_response(session.profile)

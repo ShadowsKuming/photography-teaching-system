@@ -162,3 +162,24 @@ class ProfileResponse(BaseModel):
     device_type: DeviceType
     device_constraints: list[DeviceConstraint]
     is_diagnostic: bool
+
+
+def profile_to_response(profile: UserProfile) -> ProfileResponse:
+    return ProfileResponse(
+        name=profile.name,
+        primary_goal=profile.primary_goal,
+        primary_subject=profile.primary_subject,
+        style=profile.style_preference.selected_style,
+        milestone=profile.milestone_state.current_milestone,
+        skill_state={
+            skill: SkillLevelOut(
+                level=profile.skill_state.get(skill).level,
+                recent_attempts=profile.skill_state.get(skill).recent_attempts,
+            )
+            for skill in ["composition", "lighting", "subject_clarity",
+                          "pose_expression", "background_control"]
+        },
+        device_type=profile.device.type,
+        device_constraints=profile.device.constraints,
+        is_diagnostic=profile.is_diagnostic,
+    )

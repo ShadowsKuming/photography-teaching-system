@@ -23,11 +23,12 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# Allow all origins in development — tighten this for production
+# allow_credentials=True is incompatible with allow_origins=["*"] per CORS spec
+# (Starlette ≥ 0.36 raises ValueError at startup). Use explicit origins in prod.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
