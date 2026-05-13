@@ -28,6 +28,7 @@ from backend.api.schemas import (
 )
 from backend.core.i18n import normalize_language
 from backend.api.sessions import (
+    TeachingSession,
     create_teaching_session,
     get_teaching_session,
     update_teaching_session,
@@ -44,6 +45,15 @@ from backend.models.session import (
 )
 
 router = APIRouter(prefix="/teach", tags=["teaching"])
+
+
+def _hydrate_session_profile_from_db(session: TeachingSession) -> None:
+    """
+    TeachingSession stores a copy of UserProfile in SQLite. The profiles table
+    is the canonical store after each submit (save_profile). Reload so
+    progression never runs on a stale embedded profile if session row lagged.
+    """
+    session.profile = load_profile(session.profile.name)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -143,6 +153,14 @@ def submit_photo(session_id: str, body: TeachSubmitRequest):
     if session.lesson_plan is None:
         raise HTTPException(status_code=400, detail="No active lesson plan — call /teach/start first")
 
+    try:
+        _hydrate_session_profile_from_db(session)
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No profile found for '{session.profile.name}'",
+        )
+
     language = session.language
     if body.language is not None:
         language = normalize_language(body.language)
@@ -153,7 +171,7 @@ def submit_photo(session_id: str, body: TeachSubmitRequest):
 
     brief = load_brief(session.profile.name)
 
-    result, updated_profile = complete_session_block(
+    result, updated_profile, report = complete_session_block(
         profile=session.profile,
         image=image,
         live_ctx=live_ctx,
@@ -166,6 +184,7 @@ def submit_photo(session_id: str, body: TeachSubmitRequest):
 
     # Persist updated profile and update session
     save_profile(updated_profile)
+    session.last_report = report
     session.profile = updated_profile
     update_teaching_session(session)
 
@@ -196,6 +215,14 @@ def next_lesson(session_id: str, body: TeachNextRequest | None = None):
     except KeyError:
         raise HTTPException(status_code=404, detail="Teaching session not found")
 
+    try:
+        _hydrate_session_profile_from_db(session)
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No profile found for '{session.profile.name}'",
+        )
+
     if body and body.language is not None:
         session.language = normalize_language(body.language)
 
@@ -214,5 +241,13 @@ def get_profile(session_id: str):
         session = get_teaching_session(session_id)
     except KeyError:
         raise HTTPException(status_code=404, detail="Teaching session not found")
+
+    try:
+        _hydrate_session_profile_from_db(session)
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No profile found for '{session.profile.name}'",
+        )
 
     return profile_to_response(session.profile)

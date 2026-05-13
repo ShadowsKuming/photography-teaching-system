@@ -28,6 +28,7 @@ from backend.api.sessions import (
     create_interview_session,
     delete_interview_session,
     get_interview_session,
+    update_interview_session,
 )
 from backend.core.i18n import normalize_language
 from backend.core.storage import save_profile
@@ -59,6 +60,7 @@ def chat(session_id: str, body: InterviewChatRequest):
         session.agent.set_language(session.language)
 
     turn = session.agent.chat(body.message)
+    update_interview_session(session)
     return InterviewChatResponse(
         reply=turn.reply,
         show_style_grid=turn.show_style_grid,
@@ -83,6 +85,7 @@ def submit_style(session_id: str, body: InterviewStyleRequest):
         raise HTTPException(status_code=400, detail="Style grid has not been shown yet")
 
     turn = session.agent.select_style(body.selected_styles)
+    update_interview_session(session)
     return InterviewStyleResponse(reply=turn.reply, state=turn.state)
 
 
@@ -105,6 +108,7 @@ def submit_name(session_id: str, body: InterviewNameRequest):
         raise HTTPException(status_code=422, detail="Name cannot be empty")
 
     turn = session.agent.submit_name(body.name)
+    update_interview_session(session)
     return InterviewNameResponse(reply=turn.reply, is_complete=turn.is_complete)
 
 

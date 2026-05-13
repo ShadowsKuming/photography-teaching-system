@@ -24,6 +24,7 @@ RUN mkdir -p /app/data
 ENV PYTHONUNBUFFERED=1
 ENV BACKEND_HOST=0.0.0.0
 ENV BACKEND_PORT=8000
+ENV DATABASE_PATH=/app/data/database.db
 
 # Expose port
 EXPOSE 8000
