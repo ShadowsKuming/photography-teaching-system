@@ -53,7 +53,7 @@ def load_profile(name: str) -> UserProfile:
             if not row:
                 raise FileNotFoundError(f"No profile found for '{name}'")
             data = json.loads(row[0])
-            return UserProfile(**data)
+            return UserProfile.model_validate(data)
 
 
 def load_brief(name: str) -> str | None:
