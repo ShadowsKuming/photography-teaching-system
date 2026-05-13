@@ -28,8 +28,8 @@ jobs:
             # Pull latest code
             git pull origin main
 
-            # Rebuild Docker image
-            sudo docker build -t photography-backend .
+            # Rebuild Docker image (no cache to ensure new code is picked up)
+            sudo docker build --no-cache -t photography-backend .
 
             # Stop and remove old container
             sudo docker stop photography-api || true
