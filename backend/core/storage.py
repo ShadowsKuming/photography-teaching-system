@@ -75,10 +75,10 @@ def profile_exists(name: str) -> bool:
 
 
 def delete_profile(name: str) -> None:
-    _profile_path(name).unlink()
-    brief = _brief_path(name)
-    if brief.exists():
-        brief.unlink()
+    with _lock:
+        with _get_db() as conn:
+            conn.execute("DELETE FROM profiles WHERE name = ?", (name,))
+            conn.commit()
 
 
 def list_profiles() -> list[str]:
