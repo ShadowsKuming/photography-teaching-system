@@ -10,7 +10,7 @@ GET  /teach/{id}/profile   → get current profile state
 from __future__ import annotations
 
 import base64
-from datetime import datetime
+from datetime import date as date_type, datetime
 from io import BytesIO
 
 from fastapi import APIRouter, HTTPException
@@ -34,7 +34,7 @@ from backend.api.sessions import (
     update_teaching_session,
 )
 from backend.core.planner import plan_lesson
-from backend.core.storage import load_brief, load_profile, save_profile
+from backend.core.storage import load_brief, load_profile, save_profile, update_leaderboard
 from backend.core.teacher import complete_session_block
 from backend.models.session import (
     CaptureRecord,
@@ -182,8 +182,24 @@ def submit_photo(session_id: str, body: TeachSubmitRequest):
         language=language,
     )
 
+    # Compute XP — reset daily counter if date rolled over
+    today = date_type.today().isoformat()
+    if updated_profile.daily_xp_date != today:
+        updated_profile = updated_profile.model_copy(
+            update={"daily_xp": 0.0, "daily_xp_date": today}
+        )
+    xp_earned = max(1, round(result.focus_score / 10))
+    updated_profile = updated_profile.model_copy(
+        update={"daily_xp": updated_profile.daily_xp + xp_earned}
+    )
+
     # Persist updated profile and update session
     save_profile(updated_profile)
+    update_leaderboard(
+        updated_profile.name,
+        updated_profile.primary_subject,
+        updated_profile.daily_xp,
+    )
     session.last_report = report
     session.profile = updated_profile
     update_teaching_session(session)
@@ -201,6 +217,8 @@ def submit_photo(session_id: str, body: TeachSubmitRequest):
         milestone_reached=result.milestone_reached,
         current_milestone=updated_profile.milestone_state.current_milestone,
         updated_skill_levels=levels,
+        xp_earned=xp_earned,
+        daily_xp=int(updated_profile.daily_xp),
     )
 
 

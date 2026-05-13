@@ -1,6 +1,8 @@
 import type {
+  LeaderboardResponse,
   LessonPlan,
   LiveContextInput,
+  PrimarySubject,
   Profile,
   StyleName,
   SubmitResult,
@@ -117,4 +119,10 @@ export async function getProfile(name: string): Promise<Profile> {
 
 export async function listProfiles(): Promise<string[]> {
   return request('/profiles')
+}
+
+// ── Leaderboard ───────────────────────────────────────────────────────────────
+
+export async function getLeaderboard(subject: PrimarySubject): Promise<LeaderboardResponse> {
+  return request(`/leaderboard/${subject}`)
 }

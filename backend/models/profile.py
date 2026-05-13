@@ -126,6 +126,8 @@ class UserProfile(BaseModel):
     skill_state: SkillState = Field(default_factory=SkillState)
     milestone_state: MilestoneState = Field(default_factory=MilestoneState)
     is_diagnostic: bool = True          # flipped to False after first real session
+    daily_xp: float = 0.0              # XP earned today (resets each calendar day)
+    daily_xp_date: str = ""            # YYYY-MM-DD of last XP update; empty = never
 
     @model_validator(mode="after")
     def _pose_only_for_portrait(self) -> "UserProfile":

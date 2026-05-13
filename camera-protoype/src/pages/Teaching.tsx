@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Camera } from '../components/Camera'
+import { LeaderboardDrawer } from '../components/LeaderboardDrawer'
 import { useTeaching } from '../hooks/useTeaching'
 import { ProfileSheet } from './teaching/components/ProfileSheet'
 import { SubmissionOutcome } from './teaching/components/SubmissionOutcome'
@@ -37,6 +38,8 @@ export function Teaching({ studentName, onBack }: Props) {
   const [capturedImage, setCapturedImage] = useState<string | null>(null)   // base64
   const [shotIntent, setShotIntent] = useState('')
   const [showProfile, setShowProfile] = useState(false)
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
+  const [dailyXp, setDailyXp] = useState(0)
   const contentRef = useRef<HTMLElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -48,6 +51,10 @@ export function Teaching({ studentName, onBack }: Props) {
   useEffect(() => {
     requestAnimationFrame(scrollToBottom)
   }, [step, result, isLoading, error, capturedImage])
+
+  useEffect(() => {
+    if (result?.daily_xp !== undefined) setDailyXp(result.daily_xp)
+  }, [result])
 
   // ── Camera handlers ────────────────────────────────────────────────────────
   const handleCapture = (base64: string) => {
@@ -83,6 +90,7 @@ export function Teaching({ studentName, onBack }: Props) {
     const liveCtx = buildMinimalLiveCtx(lessonPlan.target_skill)
     await submitPhoto(capturedImage, liveCtx, shotIntent || undefined)
     setStep('feedback')
+    // result is set inside useTeaching after submitPhoto resolves
     requestAnimationFrame(scrollToBottom)
     setTimeout(scrollToBottom, 120)
   }
@@ -152,14 +160,24 @@ export function Teaching({ studentName, onBack }: Props) {
               <p className="text-sm font-semibold">{studentName}</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowProfile(true)}
-            aria-label="Open your progress"
-            className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-sm font-bold text-white shadow-md shadow-indigo-600/30 ring-1 ring-white/10 transition active:scale-95"
-          >
-            {avatarInitials(studentName)}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowLeaderboard(true)}
+              aria-label="Open leaderboard"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-amber-700/50 bg-amber-950/40 text-base text-amber-300 transition hover:bg-amber-900/50 active:scale-95"
+            >
+              🏆
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowProfile(true)}
+              aria-label="Open your progress"
+              className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-sm font-bold text-white shadow-md shadow-indigo-600/30 ring-1 ring-white/10 transition active:scale-95"
+            >
+              {avatarInitials(studentName)}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -168,6 +186,14 @@ export function Teaching({ studentName, onBack }: Props) {
         profile={profile}
         onClose={() => setShowProfile(false)}
         locale={locale}
+      />
+
+      <LeaderboardDrawer
+        open={showLeaderboard}
+        subject={profile.primary_subject}
+        studentName={studentName}
+        dailyXp={dailyXp}
+        onClose={() => setShowLeaderboard(false)}
       />
 
       <main ref={contentRef} className="flex-1 overflow-y-auto px-4 py-5">

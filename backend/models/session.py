@@ -168,3 +168,4 @@ class SessionBlockResult(BaseModel):
     skill_updated: bool = False
     milestone_reached: bool = False
     is_diagnostic: bool = False         # True only for the first session block
+    xp_earned: int = 0                  # XP awarded for this submission

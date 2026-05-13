@@ -137,6 +137,8 @@ class TeachSubmitResponse(BaseModel):
     milestone_reached: bool
     current_milestone: MilestoneLevel
     updated_skill_levels: dict[str, int]
+    xp_earned: int
+    daily_xp: int
 
 
 class TeachNextResponse(BaseModel):

@@ -67,6 +67,22 @@ export interface SubmitResult {
   milestone_reached: boolean
   current_milestone: MilestoneLevel
   updated_skill_levels: Record<TargetSkill, number>
+  xp_earned: number
+  daily_xp: number
+}
+
+// ── Leaderboard ───────────────────────────────────────────────────────────────
+
+export interface LeaderboardEntry {
+  rank: number
+  name: string
+  daily_xp: number
+}
+
+export interface LeaderboardResponse {
+  subject: PrimarySubject
+  date: string
+  entries: LeaderboardEntry[]
 }
 
 // ── Live context (v1 minimal) ─────────────────────────────────────────────────

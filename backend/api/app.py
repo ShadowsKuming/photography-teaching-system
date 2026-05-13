@@ -14,7 +14,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.routes import interview, profiles, teaching
+from backend.api.routes import interview, leaderboard, profiles, teaching
 from backend.config import settings
 
 app = FastAPI(
@@ -36,6 +36,7 @@ app.add_middleware(
 app.include_router(interview.router)
 app.include_router(teaching.router)
 app.include_router(profiles.router)
+app.include_router(leaderboard.router)
 
 
 @app.get("/health")

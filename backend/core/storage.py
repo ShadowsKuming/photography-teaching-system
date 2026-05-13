@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from datetime import date
 
 from backend.models.profile import UserProfile
 from backend.core.brief import build_teaching_brief
@@ -27,6 +28,15 @@ def _get_db() -> sqlite3.Connection:
             name TEXT PRIMARY KEY,
             data TEXT NOT NULL,
             brief TEXT
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS leaderboard (
+            name    TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            date    TEXT NOT NULL,
+            daily_xp REAL NOT NULL DEFAULT 0,
+            PRIMARY KEY (name, date)
         )
     """)
     conn.commit()
@@ -86,4 +96,28 @@ def list_profiles() -> list[str]:
         with _get_db() as conn:
             cursor = conn.execute("SELECT name FROM profiles ORDER BY name")
             return [row[0] for row in cursor.fetchall()]
+
+
+def update_leaderboard(name: str, subject: str, daily_xp: float) -> None:
+    today = date.today().isoformat()
+    with _lock:
+        with _get_db() as conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO leaderboard (name, subject, date, daily_xp) VALUES (?, ?, ?, ?)",
+                (name, subject, today, daily_xp),
+            )
+            conn.commit()
+
+
+def get_leaderboard(subject: str, limit: int = 20) -> list[dict]:
+    today = date.today().isoformat()
+    with _lock:
+        with _get_db() as conn:
+            cursor = conn.execute(
+                """SELECT name, daily_xp FROM leaderboard
+                   WHERE subject = ? AND date = ?
+                   ORDER BY daily_xp DESC LIMIT ?""",
+                (subject, today, limit),
+            )
+            return [{"name": row[0], "daily_xp": row[1]} for row in cursor.fetchall()]
 

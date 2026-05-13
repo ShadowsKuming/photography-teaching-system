@@ -56,7 +56,7 @@ export function SubmissionOutcome({ result }: SubmissionOutcomeProps) {
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+      <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
         <div className="rounded-xl border border-slate-700/70 bg-slate-900/60 px-3 py-2">
           <p className="text-[10px] uppercase tracking-wide text-slate-500">Overall</p>
           <p className="mt-1 text-sm font-semibold text-white">{result.overall_score}/100</p>
@@ -64,6 +64,10 @@ export function SubmissionOutcome({ result }: SubmissionOutcomeProps) {
         <div className="rounded-xl border border-indigo-700/50 bg-indigo-950/30 px-3 py-2">
           <p className="text-[10px] uppercase tracking-wide text-indigo-300">Focus skill</p>
           <p className="mt-1 text-sm font-semibold text-indigo-100">{result.focus_score}/100</p>
+        </div>
+        <div className="rounded-xl border border-amber-700/50 bg-amber-950/30 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-wide text-amber-400">XP earned</p>
+          <p className="mt-1 text-sm font-semibold text-amber-200">+{result.xp_earned ?? 0}</p>
         </div>
       </div>
 
