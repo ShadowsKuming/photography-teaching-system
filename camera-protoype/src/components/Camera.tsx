@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core'
 import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera'
 import type { TargetSkill } from '../types'
 import { buildMinimalLiveCtx } from '../types'
+import { useI18n } from '../i18n'
 
 interface Props {
   targetSkill: TargetSkill
@@ -11,35 +12,6 @@ interface Props {
 }
 
 const isNative = Capacitor.isNativePlatform()
-
-// ── Skill-specific rotating tips ─────────────────────────────────────────────
-const SKILL_TIPS: Record<TargetSkill, string[]> = {
-  composition: [
-    'Place your subject on a grid line',
-    'Leave breathing room in the direction they face',
-    'Try a different angle or distance',
-  ],
-  lighting: [
-    'Watch for harsh shadows on your subject',
-    'Soft, diffused light flatters most subjects',
-    'Avoid shooting directly into a bright window',
-  ],
-  subject_clarity: [
-    'Create distance between subject and background',
-    'Get closer to fill the frame with your subject',
-    'Focus on your subject\'s eyes',
-  ],
-  pose_expression: [
-    'Ask your subject to relax their shoulders',
-    'Try a slight turn — avoid facing straight-on',
-    'Wait for a natural, candid moment',
-  ],
-  background_control: [
-    'Check what\'s directly behind your subject',
-    'Move to a cleaner, simpler background',
-    'Look for distracting lines or objects',
-  ],
-}
 
 // Maps a cue to the backend EventDetail value it corresponds to
 const CUE_TO_DETAIL: Record<string, string> = {
@@ -62,6 +34,7 @@ interface ActiveCue {
 }
 
 export function Camera({ targetSkill, onCapture, onCancel }: Props) {
+  const { copy } = useI18n()
   const videoRef      = useRef<HTMLVideoElement>(null)
   const streamRef     = useRef<MediaStream | null>(null)
   const tipIndexRef   = useRef(0)
@@ -140,13 +113,11 @@ export function Camera({ targetSkill, onCapture, onCancel }: Props) {
       const brightness = sum / (40 * 40)
 
       if (brightness < 45) {
-        const text = 'Scene is very dark — move to better light'
         cuesShownRef.current.push('dark')
-        setCue({ text, source: 'brightness', detail: CUE_TO_DETAIL.dark })
+        setCue({ text: copy.cameraDark, source: 'brightness', detail: CUE_TO_DETAIL.dark })
       } else if (brightness > 215) {
-        const text = 'Very bright — avoid shooting into light'
         cuesShownRef.current.push('bright')
-        setCue({ text, source: 'brightness', detail: CUE_TO_DETAIL.bright })
+        setCue({ text: copy.cameraBright, source: 'brightness', detail: CUE_TO_DETAIL.bright })
       }
     }, 1500)
     return () => clearInterval(id)
@@ -156,10 +127,9 @@ export function Camera({ targetSkill, onCapture, onCancel }: Props) {
   useEffect(() => {
     if (isNative) return
     if (Math.abs(tiltAngle) > 8) {
-      const dir = tiltAngle > 0 ? 'right' : 'left'
       cuesShownRef.current.push('tilt')
       setCue({
-        text: `Camera tilting ${dir} — straighten your frame`,
+        text: tiltAngle > 0 ? copy.cameraTiltRight : copy.cameraTiltLeft,
         source: 'tilt',
         detail: CUE_TO_DETAIL.tilt,
       })
@@ -169,7 +139,7 @@ export function Camera({ targetSkill, onCapture, onCancel }: Props) {
   // ── Rotating skill tips (every 5 s) ──────────────────────────────────────
   useEffect(() => {
     if (isNative) return
-    const tips = SKILL_TIPS[targetSkill]
+    const tips = copy.cameraSkillTips[targetSkill] ?? []
 
     // Show first tip immediately
     setCue({ text: tips[0], source: 'tip', detail: CUE_TO_DETAIL[targetSkill] })
@@ -206,7 +176,7 @@ export function Camera({ targetSkill, onCapture, onCancel }: Props) {
   if (isNative) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black">
-        <p className="text-sm text-white/60">Opening camera…</p>
+        <p className="text-sm text-white/60">{copy.cameraOpening}</p>
       </div>
     )
   }
@@ -290,8 +260,7 @@ export function Camera({ targetSkill, onCapture, onCancel }: Props) {
       {tiltBadgeVisible && (
         <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 flex justify-center">
           <div className="rounded-full bg-black/60 px-3 py-1 text-[11px] font-medium text-amber-300 backdrop-blur-sm">
-            {tiltAngle > 0 ? '← ' : '→ '}
-            Tilted {Math.abs(tiltAngle).toFixed(0)}°
+            {copy.cameraTiltedBadge(Math.abs(tiltAngle))}
           </div>
         </div>
       )}

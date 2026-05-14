@@ -40,6 +40,14 @@ export interface I18nCopy {
   actionRetry: string
   actionAdvance: string
   actionEndLesson: string
+  // Camera live cues
+  cameraDark: string
+  cameraBright: string
+  cameraTiltLeft: string
+  cameraTiltRight: string
+  cameraTiltedBadge: (deg: number) => string
+  cameraOpening: string
+  cameraSkillTips: Record<string, string[]>
 }
 
 const TRANSLATIONS: Record<AppLocale, I18nCopy> = {
@@ -81,6 +89,39 @@ const TRANSLATIONS: Record<AppLocale, I18nCopy> = {
     actionRetry: 'Try again',
     actionAdvance: 'Next challenge',
     actionEndLesson: 'End lesson',
+    cameraDark: 'Scene is very dark — move to better light',
+    cameraBright: 'Very bright — avoid shooting into light',
+    cameraTiltLeft: 'Camera tilting left — straighten your frame',
+    cameraTiltRight: 'Camera tilting right — straighten your frame',
+    cameraTiltedBadge: (deg) => `← Tilted ${deg}°`,
+    cameraOpening: 'Opening camera…',
+    cameraSkillTips: {
+      composition: [
+        'Place your subject on a grid line',
+        'Leave breathing room in the direction they face',
+        'Try a different angle or distance',
+      ],
+      lighting: [
+        'Watch for harsh shadows on your subject',
+        'Soft, diffused light flatters most subjects',
+        'Avoid shooting directly into a bright window',
+      ],
+      subject_clarity: [
+        'Create distance between subject and background',
+        'Get closer to fill the frame with your subject',
+        'Focus on your subject\'s eyes',
+      ],
+      pose_expression: [
+        'Ask your subject to relax their shoulders',
+        'Try a slight turn — avoid facing straight-on',
+        'Wait for a natural, candid moment',
+      ],
+      background_control: [
+        'Check what\'s directly behind your subject',
+        'Move to a cleaner, simpler background',
+        'Look for distracting lines or objects',
+      ],
+    },
   },
   'pt-BR': {
     appName: 'Mentor de Fotografia',
@@ -120,6 +161,39 @@ const TRANSLATIONS: Record<AppLocale, I18nCopy> = {
     actionRetry: 'Tentar novamente',
     actionAdvance: 'Proximo desafio',
     actionEndLesson: 'Encerrar aula',
+    cameraDark: 'Cena muito escura — va para uma luz melhor',
+    cameraBright: 'Muito brilhante — evite fotografar contra a luz',
+    cameraTiltLeft: 'Camera inclinando para a esquerda — endireite o quadro',
+    cameraTiltRight: 'Camera inclinando para a direita — endireite o quadro',
+    cameraTiltedBadge: (deg) => `← Inclinado ${deg}°`,
+    cameraOpening: 'Abrindo camera…',
+    cameraSkillTips: {
+      composition: [
+        'Coloque seu sujeito em uma linha da grade',
+        'Deixe espaco de respiro na direcao que ele olha',
+        'Tente um angulo ou distancia diferentes',
+      ],
+      lighting: [
+        'Observe sombras duras no seu sujeito',
+        'Luz suave e difusa favorece a maioria dos sujeitos',
+        'Evite fotografar diretamente para uma janela brilhante',
+      ],
+      subject_clarity: [
+        'Crie distancia entre o sujeito e o fundo',
+        'Aproxime-se para preencher o quadro com seu sujeito',
+        'Foque nos olhos do seu sujeito',
+      ],
+      pose_expression: [
+        'Peca ao sujeito para relaxar os ombros',
+        'Tente uma leve virada — evite ficar de frente',
+        'Aguarde um momento natural e espontaneo',
+      ],
+      background_control: [
+        'Verifique o que esta diretamente atras do sujeito',
+        'Mova para um fundo mais limpo e simples',
+        'Procure linhas ou objetos que distraiam',
+      ],
+    },
   },
 }
 

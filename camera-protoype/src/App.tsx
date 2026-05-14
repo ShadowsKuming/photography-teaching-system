@@ -11,7 +11,7 @@ type AppPage = 'landing' | 'interview' | 'teaching'
 export function App() {
   const [page, setPage] = useState<AppPage>('landing')
   const [studentId, setStudentId] = useState('')
-  const [locale, setLocale] = useState<AppLocale>('en-GB')
+  const [locale, setLocale] = useState<AppLocale>('pt-BR')
   const copy = getCopy(locale)
 
   // Resume automatically if a student_id is stored from a previous session
