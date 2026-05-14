@@ -111,13 +111,13 @@ class UserProfile(BaseModel):
     """
     Central learner contract.
 
-    Stable fields  : primary_goal, style_preference, primary_subject, device
+    Stable fields  : student_id, name, primary_goal, style_preference, primary_subject, device
     Dynamic fields : skill_state, milestone_state  (updated after each session)
 
+    student_id is the unique key (e.g. "John#2352"); name is the display-only first name.
     is_diagnostic is True until the first real session block completes.
-    During diagnostic mode the stuck protocol and 2/3 advancement rule
-    are suppressed — skill levels come from interview estimates only.
     """
+    student_id: str = ""   # set by storage.create_profile(); empty only before first save
     name: str
     primary_goal: PrimaryGoal
     style_preference: StylePreference

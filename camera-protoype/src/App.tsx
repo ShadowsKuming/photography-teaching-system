@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Landing } from './pages/Landing'
 import { Interview } from './pages/Interview'
 import { Teaching } from './pages/Teaching'
@@ -10,18 +10,32 @@ type AppPage = 'landing' | 'interview' | 'teaching'
 
 export function App() {
   const [page, setPage] = useState<AppPage>('landing')
-  const [studentName, setStudentName] = useState('')
+  const [studentId, setStudentId] = useState('')
   const [locale, setLocale] = useState<AppLocale>('en-GB')
   const copy = getCopy(locale)
 
+  // Resume automatically if a student_id is stored from a previous session
+  useEffect(() => {
+    const saved = localStorage.getItem('student_id')
+    if (saved) {
+      setStudentId(saved)
+      setPage('teaching')
+    }
+  }, [])
+
   const handleInterviewComplete = (profile: Profile) => {
-    setStudentName(profile.name)
+    setStudentId(profile.student_id)
     setPage('teaching')
   }
 
-  const handleReturningStudent = (name: string) => {
-    setStudentName(name)
+  const handleReturningStudent = (id: string) => {
+    setStudentId(id)
     setPage('teaching')
+  }
+
+  const handleBack = () => {
+    setStudentId('')
+    setPage('landing')
   }
 
   if (page === 'landing') {
@@ -49,8 +63,8 @@ export function App() {
   return (
     <I18nProvider locale={locale} setLocale={setLocale} copy={copy}>
       <Teaching
-        studentName={studentName}
-        onBack={() => setPage('landing')}
+        studentId={studentId}
+        onBack={handleBack}
       />
     </I18nProvider>
   )

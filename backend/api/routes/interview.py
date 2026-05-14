@@ -31,7 +31,7 @@ from backend.api.sessions import (
     update_interview_session,
 )
 from backend.core.i18n import normalize_language
-from backend.core.storage import save_profile
+from backend.core.storage import create_profile
 
 router = APIRouter(prefix="/interview", tags=["interview"])
 
@@ -130,9 +130,9 @@ def complete_interview(session_id: str):
         )
 
     profile = session.agent.extract_profile()
-    save_profile(profile)
+    profile = create_profile(profile)   # generates student_id atomically
 
-    return InterviewCompleteResponse(profile=profile)
+    return InterviewCompleteResponse(profile=profile, student_id=profile.student_id)
 
 
 @router.delete("/{session_id}")

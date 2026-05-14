@@ -53,7 +53,7 @@ def _hydrate_session_profile_from_db(session: TeachingSession) -> None:
     is the canonical store after each submit (save_profile). Reload so
     progression never runs on a stale embedded profile if session row lagged.
     """
-    session.profile = load_profile(session.profile.name)
+    session.profile = load_profile(session.profile.student_id)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -121,11 +121,11 @@ def start_teaching(body: TeachStartRequest):
     language = normalize_language(body.language)
 
     try:
-        profile = load_profile(body.name)
+        profile = load_profile(body.student_id)
     except FileNotFoundError:
-        raise HTTPException(status_code=404, detail=f"No profile found for '{body.name}'")
+        raise HTTPException(status_code=404, detail=f"No profile found for '{body.student_id}'")
 
-    brief = load_brief(body.name)
+    brief = load_brief(body.student_id)
     lesson_plan = plan_lesson(profile, teaching_brief=brief, language=language)
     session = create_teaching_session(profile, language=language)
     session.lesson_plan = lesson_plan
@@ -196,6 +196,7 @@ def submit_photo(session_id: str, body: TeachSubmitRequest):
     # Persist updated profile and update session
     save_profile(updated_profile)
     update_leaderboard(
+        updated_profile.student_id,
         updated_profile.name,
         updated_profile.primary_subject,
         updated_profile.daily_xp,

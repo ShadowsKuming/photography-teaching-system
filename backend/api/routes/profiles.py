@@ -10,31 +10,31 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
-from backend.api.schemas import ProfileResponse, profile_to_response
+from backend.api.schemas import ProfileResponse, ProfileSummary, profile_to_response
 from backend.core.storage import delete_profile as storage_delete, list_profiles, load_profile, profile_exists
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
 
 
-@router.get("", response_model=list[str])
+@router.get("", response_model=list[ProfileSummary])
 def get_profiles():
-    """List names of all saved student profiles."""
+    """List all student profiles as {student_id, name} summaries."""
     return list_profiles()
 
 
-@router.get("/{name}", response_model=ProfileResponse)
-def get_profile(name: str):
-    """Get a student profile by name."""
-    if not profile_exists(name):
-        raise HTTPException(status_code=404, detail=f"No profile found for '{name}'")
-    profile = load_profile(name)
+@router.get("/{student_id:path}", response_model=ProfileResponse)
+def get_profile(student_id: str):
+    """Get a student profile by student_id."""
+    if not profile_exists(student_id):
+        raise HTTPException(status_code=404, detail=f"No profile found for '{student_id}'")
+    profile = load_profile(student_id)
     return profile_to_response(profile)
 
 
-@router.delete("/{name}")
-def delete_profile(name: str):
+@router.delete("/{student_id:path}")
+def delete_profile(student_id: str):
     """Delete a student profile."""
-    if not profile_exists(name):
-        raise HTTPException(status_code=404, detail=f"No profile found for '{name}'")
-    storage_delete(name)
-    return {"deleted": name}
+    if not profile_exists(student_id):
+        raise HTTPException(status_code=404, detail=f"No profile found for '{student_id}'")
+    storage_delete(student_id)
+    return {"deleted": student_id}

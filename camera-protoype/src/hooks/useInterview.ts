@@ -102,6 +102,8 @@ export function useInterview(locale: AppLocale): UseInterviewReturn {
     setError(null)
     try {
       const res = await api.interviewComplete(sessionIdRef.current)
+      localStorage.setItem('student_id', res.student_id)
+      localStorage.setItem('student_name', res.profile.name)
       setProfile(res.profile)
     } catch (e) {
       setError(String(e))

@@ -14,7 +14,7 @@ export interface UseTeachingReturn {
   clearResult: () => void
 }
 
-export function useTeaching(studentName: string, locale: AppLocale): UseTeachingReturn {
+export function useTeaching(studentId: string, locale: AppLocale): UseTeachingReturn {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [lessonPlan, setLessonPlan] = useState<LessonPlan | null>(null)
   const [result, setResult] = useState<SubmitResult | null>(null)
@@ -23,11 +23,11 @@ export function useTeaching(studentName: string, locale: AppLocale): UseTeaching
   const sessionIdRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!studentName || sessionIdRef.current) return
+    if (!studentId || sessionIdRef.current) return
     setIsLoading(true)
     setError(null)
     api
-      .teachStart(studentName, locale)
+      .teachStart(studentId, locale)
       .then((res) => {
         sessionIdRef.current = res.session_id
         setProfile(res.profile)
@@ -35,7 +35,7 @@ export function useTeaching(studentName: string, locale: AppLocale): UseTeaching
       })
       .catch((e) => setError(String(e)))
       .finally(() => setIsLoading(false))
-  }, [studentName, locale])
+  }, [studentId, locale])
 
   const submitPhoto = useCallback(
     async (imageBase64: string, liveCtx: LiveContextInput, shotIntent?: string) => {

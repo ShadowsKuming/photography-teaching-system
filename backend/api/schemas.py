@@ -23,6 +23,11 @@ from backend.models.session import RecommendedAction, TargetSkill
 from backend.models.teaching import LessonPlan
 
 
+class ProfileSummary(BaseModel):
+    student_id: str
+    name: str
+
+
 # ── Interview ─────────────────────────────────────────────────────────────────
 
 class InterviewStartRequest(BaseModel):
@@ -68,12 +73,13 @@ class InterviewNameResponse(BaseModel):
 
 class InterviewCompleteResponse(BaseModel):
     profile: UserProfile
+    student_id: str
 
 
 # ── Teaching ──────────────────────────────────────────────────────────────────
 
 class TeachStartRequest(BaseModel):
-    name: str  # load existing profile by name
+    student_id: str
     language: LanguageCode = "en-GB"
 
 
@@ -155,6 +161,7 @@ class SkillLevelOut(BaseModel):
 
 
 class ProfileResponse(BaseModel):
+    student_id: str
     name: str
     primary_goal: PrimaryGoal
     primary_subject: PrimarySubject
@@ -168,6 +175,7 @@ class ProfileResponse(BaseModel):
 
 def profile_to_response(profile: UserProfile) -> ProfileResponse:
     return ProfileResponse(
+        student_id=profile.student_id,
         name=profile.name,
         primary_goal=profile.primary_goal,
         primary_subject=profile.primary_subject,

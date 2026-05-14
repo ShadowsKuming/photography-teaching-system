@@ -69,19 +69,19 @@ export async function interviewName(
 
 export async function interviewComplete(
   sessionId: string,
-): Promise<{ profile: Profile }> {
+): Promise<{ profile: Profile; student_id: string }> {
   return request(`/interview/${sessionId}/complete`, { method: 'POST' })
 }
 
 // ── Teaching ──────────────────────────────────────────────────────────────────
 
 export async function teachStart(
-  name: string,
+  studentId: string,
   language: AppLocale,
 ): Promise<{ session_id: string; lesson_plan: LessonPlan; profile: Profile }> {
   return request('/teach/start', {
     method: 'POST',
-    body: JSON.stringify({ name, language }),
+    body: JSON.stringify({ student_id: studentId, language }),
   })
 }
 
@@ -113,11 +113,11 @@ export async function teachNext(
   })
 }
 
-export async function getProfile(name: string): Promise<Profile> {
-  return request(`/profiles/${encodeURIComponent(name)}`)
+export async function getProfile(studentId: string): Promise<Profile> {
+  return request(`/profiles/${encodeURIComponent(studentId)}`)
 }
 
-export async function listProfiles(): Promise<string[]> {
+export async function listProfiles(): Promise<{ student_id: string; name: string }[]> {
   return request('/profiles')
 }
 

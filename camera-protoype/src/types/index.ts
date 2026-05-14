@@ -24,6 +24,7 @@ export interface SkillLevel {
 }
 
 export interface Profile {
+  student_id: string
   name: string
   primary_goal: PrimaryGoal
   primary_subject: PrimarySubject

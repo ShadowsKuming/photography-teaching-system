@@ -17,13 +17,13 @@ function avatarInitials(name: string): string {
 }
 
 interface Props {
-  studentName: string
+  studentId: string
   onBack?: () => void
 }
 
 type Step = 'lesson' | 'camera' | 'intent' | 'evaluating' | 'feedback'
 
-export function Teaching({ studentName, onBack }: Props) {
+export function Teaching({ studentId, onBack }: Props) {
   const { locale, copy } = useI18n()
   const actionLabels: Record<RecommendedAction, string> = {
     retry: copy.actionRetry,
@@ -32,7 +32,8 @@ export function Teaching({ studentName, onBack }: Props) {
     end_lesson: copy.actionEndLesson,
   }
   const { profile, lessonPlan, result, isLoading, error, submitPhoto, nextLesson } =
-    useTeaching(studentName, locale)
+    useTeaching(studentId, locale)
+  const studentName = profile?.name ?? ''
 
   const [step, setStep] = useState<Step>('lesson')
   const [capturedImage, setCapturedImage] = useState<string | null>(null)   // base64
