@@ -125,6 +125,7 @@ export function Teaching({ studentId, onBack }: Props) {
     return (
       <Camera
         targetSkill={lessonPlan.target_skill}
+        primarySubject={profile.primary_subject}
         onCapture={handleCapture}
         onCancel={handleCameraCancel}
       />

@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera'
-import type { TargetSkill } from '../types'
+import type { PrimarySubject, TargetSkill } from '../types'
 import { buildMinimalLiveCtx } from '../types'
 import { useI18n } from '../i18n'
 
 interface Props {
   targetSkill: TargetSkill
+  primarySubject: PrimarySubject
   onCapture: (imageBase64: string, liveCtx: ReturnType<typeof buildMinimalLiveCtx>) => void
   onCancel: () => void
 }
@@ -25,7 +26,7 @@ const CUE_TO_DETAIL: Record<string, string> = {
   background_control: 'simplify_background',
 }
 
-type CueSource = 'tilt' | 'brightness' | 'tip'
+type CueSource = 'tilt' | 'brightness' | 'tip' | 'subject'
 
 interface ActiveCue {
   text: string
@@ -33,12 +34,13 @@ interface ActiveCue {
   detail: string
 }
 
-export function Camera({ targetSkill, onCapture, onCancel }: Props) {
+export function Camera({ targetSkill, primarySubject, onCapture, onCancel }: Props) {
   const { copy } = useI18n()
-  const videoRef      = useRef<HTMLVideoElement>(null)
-  const streamRef     = useRef<MediaStream | null>(null)
-  const tipIndexRef   = useRef(0)
-  const cuesShownRef  = useRef<string[]>([])    // tracks which cues appeared (for live ctx)
+  const videoRef           = useRef<HTMLVideoElement>(null)
+  const streamRef          = useRef<MediaStream | null>(null)
+  const tipIndexRef        = useRef(0)
+  const cuesShownRef       = useRef<string[]>([])
+  const subjectWarningRef  = useRef(false)   // true while no-face warning is showing
 
   const [cue, setCue]           = useState<ActiveCue | null>(null)
   const [tiltAngle, setTiltAngle] = useState(0)
@@ -141,11 +143,13 @@ export function Camera({ targetSkill, onCapture, onCancel }: Props) {
     if (isNative) return
     const tips = copy.cameraSkillTips[targetSkill] ?? []
 
-    // Show first tip immediately
-    setCue({ text: tips[0], source: 'tip', detail: CUE_TO_DETAIL[targetSkill] })
-    cuesShownRef.current.push(targetSkill)
+    if (!subjectWarningRef.current) {
+      setCue({ text: tips[0], source: 'tip', detail: CUE_TO_DETAIL[targetSkill] })
+      cuesShownRef.current.push(targetSkill)
+    }
 
     const id = setInterval(() => {
+      if (subjectWarningRef.current) return   // don't overwrite subject warning
       tipIndexRef.current = (tipIndexRef.current + 1) % tips.length
       setCue({
         text: tips[tipIndexRef.current],
@@ -156,6 +160,43 @@ export function Camera({ targetSkill, onCapture, onCancel }: Props) {
     }, 5000)
     return () => clearInterval(id)
   }, [targetSkill])
+
+  // ── Portrait subject check via FaceDetector (every 2 s, 3 s grace) ───────
+  useEffect(() => {
+    if (isNative || primarySubject !== 'portrait') return
+    if (!('FaceDetector' in window)) return   // API not supported — degrade silently
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const detector = new (window as any).FaceDetector({ fastMode: true, maxDetectedFaces: 1 })
+    const tips = copy.cameraSkillTips[targetSkill] ?? []
+
+    let graceTimer: ReturnType<typeof setTimeout>
+    let intervalId: ReturnType<typeof setInterval>
+
+    graceTimer = setTimeout(() => {
+      intervalId = setInterval(async () => {
+        const video = videoRef.current
+        if (!video || !video.videoWidth) return
+        try {
+          const faces = await detector.detect(video)
+          if (faces.length === 0) {
+            subjectWarningRef.current = true
+            setCue({ text: copy.cameraNoFace, source: 'subject', detail: 'reposition_subject' })
+          } else if (subjectWarningRef.current) {
+            subjectWarningRef.current = false
+            setCue({ text: tips[tipIndexRef.current] ?? tips[0], source: 'tip', detail: CUE_TO_DETAIL[targetSkill] })
+          }
+        } catch {
+          // FaceDetector.detect() can throw on some frames — ignore
+        }
+      }, 2000)
+    }, 3000)
+
+    return () => {
+      clearTimeout(graceTimer)
+      clearInterval(intervalId)
+    }
+  }, [primarySubject, targetSkill])
 
   // ── Capture ───────────────────────────────────────────────────────────────
   const captureFrame = useCallback(() => {
@@ -272,12 +313,14 @@ export function Camera({ targetSkill, onCapture, onCancel }: Props) {
         >
           <div
             className={`rounded-xl px-4 py-2 text-xs font-medium text-white backdrop-blur-sm ${
-              cue.source === 'brightness' ? 'bg-amber-600/80' :
-              cue.source === 'tilt'       ? 'bg-rose-600/80'  :
+              cue.source === 'subject'    ? 'bg-orange-600/90' :
+              cue.source === 'brightness' ? 'bg-amber-600/80'  :
+              cue.source === 'tilt'       ? 'bg-rose-600/80'   :
                                             'bg-black/60'
             }`}
           >
-            {cue.source === 'tip'        ? '💡 ' :
+            {cue.source === 'subject'    ? '👤 ' :
+             cue.source === 'tip'        ? '💡 ' :
              cue.source === 'brightness' ? '⚡ ' : '⚠ '}
             {cue.text}
           </div>

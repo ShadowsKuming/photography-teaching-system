@@ -47,6 +47,7 @@ export interface I18nCopy {
   cameraTiltRight: string
   cameraTiltedBadge: (deg: number) => string
   cameraOpening: string
+  cameraNoFace: string
   cameraSkillTips: Record<string, string[]>
 }
 
@@ -95,6 +96,7 @@ const TRANSLATIONS: Record<AppLocale, I18nCopy> = {
     cameraTiltRight: 'Camera tilting right — straighten your frame',
     cameraTiltedBadge: (deg) => `← Tilted ${deg}°`,
     cameraOpening: 'Opening camera…',
+    cameraNoFace: 'No face visible — position a person in the frame for portrait practice',
     cameraSkillTips: {
       composition: [
         'Place your subject on a grid line',
@@ -167,6 +169,7 @@ const TRANSLATIONS: Record<AppLocale, I18nCopy> = {
     cameraTiltRight: 'Camera inclinando para a direita — endireite o quadro',
     cameraTiltedBadge: (deg) => `← Inclinado ${deg}°`,
     cameraOpening: 'Abrindo camera…',
+    cameraNoFace: 'Nenhum rosto visivel — posicione uma pessoa no quadro para praticar retrato',
     cameraSkillTips: {
       composition: [
         'Coloque seu sujeito em uma linha da grade',
